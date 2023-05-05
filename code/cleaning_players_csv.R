@@ -14,7 +14,7 @@ View(players)
 
 ---------#cleanin the players dataset-----
 
-----#active ----
+----# active ----
 # creating a dummy variable for the active players = 1
 players$active <- ifelse(players$active == TRUE, 1, 0)
 
