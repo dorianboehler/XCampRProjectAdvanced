@@ -1,5 +1,5 @@
 ##################################################
-# Script to scrape and clean the list of players from atptour.com
+# Script to scrape and clean the list of players from atptour.com (takes about 3 hours)
 ##################################################
 
 # SET UP ------------------------------------------------------------------
