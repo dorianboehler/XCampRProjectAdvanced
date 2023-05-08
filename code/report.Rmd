@@ -1,0 +1,16 @@
+---
+output: pdf_document
+---
+
+```{r, include = FALSE, warning = FALSE}
+setwd('../')
+source('code/report.R')
+```
+
+---
+title: 'A Detailed Analysis of `r playerName`'s Results'
+author: 'Noah Baiguini, Dorian Böhler'
+date: '5/26/2023'
+---
+
+
