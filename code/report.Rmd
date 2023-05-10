@@ -11,19 +11,23 @@ source('code/report.R')
 source('data/playersCleaned')
 ```
 
-
-
-
-
-
-<br>
-
 ---
 title: 'A Detailed Analysis of `r playerName`'s Results'
 author: 'Noah Baiguini, Dorian Böhler'
 date: '5/26/2023'
 ---
 
+
+**General information about the player **
+
+Here some ground information about `r playerName`
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+require(gridExtra)
+grid.arrange(informationPlayer ,  ncol=1)
+```
+
+
+<br>
 
 **How much money has the player earned**
 
