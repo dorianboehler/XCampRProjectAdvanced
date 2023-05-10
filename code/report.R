@@ -381,30 +381,50 @@ results <- results %>%
 #load the necessary packages 
 library(dplyr)
 library(ggplot2)
-
+library(lubridate)
 # how much money the player has earned 
 
-
-newTable <- results[, c("tournamentStart", "priceMoneyValue", "tournament")]
-newTable <- unique(new_table)
-totalMoneyEarned <- sum(new_table$priceMoneyValue)
-
+newTable <- results[, c("tournamentStart", "priceMoneyUSDollar", "tournament")]
+newTable <- unique(newTable)
+totalMoneyEarned <- sum(newTable$priceMoneyUSDollar)
 
 
-# at which age the player earned the most -----still an error in it 
+# at which age the player earned the most 
 
-playerBirthday <- as.Date(playerBirthday, "%Y-%m-%d")
-tournamentYear <- as.numeric(substr(results$tournamentStart, 1, 4))
-playerAge <- tournamentYear - as.numeric(format(playerBirthday, "%Y"))
+newTable1 <- results[, c("tournamentStart", "priceMoneyUSDollar")]
+newTable1 <- unique(newTable1)
 
-age_mean <- aggregate(priceMoneyValue ~ playerAge, data = results, mean)
-max_age <- age_mean$playerAge[which.max(age_mean$priceMoneyValue)]
-max_age_earnings <- sum(results$priceMoneyValue[results$playerAge == max_age])
+# Convert playerBirthday to date format if it is not already
+if (!is.Date(playerBirthday)) {
+  playerBirthday <- as.Date(playerBirthday, format = "%m/%d/%Y")
+}
+
+# Create new variable agePlayer in newTable1
+
+newTable1$agePlayer <- as.numeric(difftime(newTable1$tournamentStart, playerBirthday, units = "days")) / 365.25
+newTable1$agePlayer <- floor(as.integer(newTable1$agePlayer))
+
+#plot age against earnings
+ggplot1 <- ggplot(newTable1, aes(x = agePlayer, y = priceMoneyUSDollar/10000)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  annotate("text", x = 35, y = 230, 
+           label = paste0("Slope: ", round(coef(lm(priceMoneyUSDollar ~ agePlayer, data = newTable1))[2], 3),
+                          "\nIntercept: ", round(coef(lm(priceMoneyUSDollar ~ agePlayer, data = newTable1))[1], 3))) +
+  scale_y_continuous(labels = scales::comma_format(scale = 1), name = "Price Money (x10,000 USD)") +
+  labs(x = "Age", tag = "") +
+  ggtitle("Price Money vs. Age") +
+  theme(plot.tag.position = c(0.7, 0.8))
 
 
 
 
+# Aggregate prize money by age
+ageEarnings <- aggregate(priceMoneyUSDollar ~ agePlayer, newTable1, sum)
 
+# Find the age at which the player earned the most
+maxAge <- ageEarnings[which.max(ageEarnings$priceMoneyUSDollar), "agePlayer"]
+maxEarnings <- max(ageEarnings$priceMoneyUSDollar)
 
 
 #in which country has the player played the most 
@@ -414,6 +434,7 @@ newTable2 <- unique(newTable2)
 countryMostPlayed <- results %>%
   count(tournamentCountry) %>%
   top_n(1, n)
+MostCountryPlayedIn <- countryMostPlayed$tournamentCountry
 
 print(paste0('The country in which ', playerName, ' has played the most is:', countryMostPlayed$tournamentCountry))
 
@@ -429,91 +450,58 @@ percentage1 <- newTable3 %>%
   filter(outdoor == 1) %>% 
   summarise(percentage = mean(win == 1)) %>% 
   pull(percentage)
+
+percentage1 <- round(percentage1, 4)*100
 percentage1
 #indoor
 percentage2 <- newTable3 %>% 
   filter(outdoor == 0) %>% 
   summarise(percentage = mean(win == 1)) %>% 
   pull(percentage)
+percentage2 <- round(percentage2, 4)*100
 percentage2
 
 
 
+#histograms about the winning percent in each set played 
+  for (Z in 1:5) {
+    tableSetZ <- results[, c(paste0("gamesLostSet", Z), paste0("gamesWonSet", Z))]
+    tableSetZ <- tableSetZ[complete.cases(tableSetZ), ]
+    tableSetZ$setZWin <- ifelse(tableSetZ[[paste0("gamesWonSet", Z)]] > tableSetZ[[paste0("gamesLostSet", Z)]], 1, 0)
+    
+    assign(paste0("barSet", Z), ggplot(tableSetZ, aes(x = factor(setZWin))) +
+             geom_bar(fill = "blue") +
+             labs(title = paste0("Set ", Z, " Win Distribution"), x = paste0("Set ", Z, " Win"), y = "Count"))
+    
+    assign(paste0("set", Z, "WinPercentage"), round(mean(tableSetZ$setZWin == 1), 4) * 100)
+  }
 
-#histograms about each set played 
-
-tableSet1 <- results[, c("gamesLostSet1", "gamesWonSet1")]
-tableSet1 <- tableSet1[complete.cases(tableSet1), ]
-tableSet1$set1Win <- ifelse(tableSet1$gamesWonSet1 > tableSet1$gamesLostSet1, 1, 0)
-
-tableSet2 <- results[, c("gamesLostSet2", "gamesWonSet2")]
-tableSet2 <- tableSet2[complete.cases(tableSet2), ]
-tableSet2$set2Win <- ifelse(tableSet2$gamesWonSet2 > tableSet2$gamesLostSet2, 1, 0)
-
-tableSet3 <- results[, c("gamesLostSet3", "gamesWonSet3")]
-tableSet3 <- tableSet3[complete.cases(tableSet3), ]
-tableSet3$set3Win <- ifelse(tableSet3$gamesWonSet3 > tableSet3$gamesLostSet3, 1, 0)
-
-tableSet4 <- results[, c("gamesLostSet4", "gamesWonSet4")]
-tableSet4 <- tableSet4[complete.cases(tableSet4), ]
-tableSet4$set4Win <- ifelse(tableSet4$gamesWonSet4 > tableSet4$gamesLostSet4, 1, 0)
-
-tableSet5 <- results[, c("gamesLostSet5", "gamesWonSet5")]
-tableSet5 <- tableSet5[complete.cases(tableSet5), ]
-tableSet5$set5Win <- ifelse(tableSet5$gamesWonSet5 > tableSet5$gamesLostSet5, 1, 0)
-
-
-barSet1 <- ggplot(tableSet1, aes(x = factor(set1Win))) +
-  geom_bar(fill = "blue") +
-  labs(title = "Set 1 Win Distribution", x = "Set 1 Win", y = "Count")
-barSet2 <- ggplot(tableSet2, aes(x = factor(set2Win))) +
-  geom_bar(fill = "blue") +
-  labs(title = "Set 2 Win Distribution", x = "Set 2 Win", y = "Count")
-barSet3 <- ggplot(tableSet3, aes(x = factor(set3Win))) +
-  geom_bar(fill = "blue") +
-  labs(title = "Set 3 Win Distribution", x = "Set 3 Win", y = "Count")
-
-barSet4 <- ggplot(tableSet4, aes(x = factor(set4Win))) +
-  geom_bar(fill = "blue") +
-  labs(title = "Set 4 Win Distribution", x = "Set 4 Win", y = "Count")
-
-barSet5 <- ggplot(tableSet5, aes(x = factor(set5Win))) +
-  geom_bar(fill = "blue") +
-  labs(title = "Set 5 Win Distribution", x = "Set 5 Win", y = "Count")
 
 require(gridExtra)
 grid.arrange(barSet1, barSet2, barSet3, barSet4, barSet5,  ncol=5)
 
 
-set1Win_perc <- mean(tableSet1$set1Win == 1) * 100
-cat(paste0("Percentage of win in the fifth set is: ", round(set1Win_perc, 2), "%"))
 
-set2Win_perc <- mean(tableSet2$set2Win == 1) * 100
-cat(paste0("Percentage of win in the fifth set is: ", round(set2Win_perc, 2), "%"))
+# the highest rank achived and for how many weeks in total, and the maximum consequently  
 
-set3Win_perc <- mean(tableSet3$set3Win == 1) * 100
-cat(paste0("Percentage of win in the fifth set is: ", round(set3Win_perc, 2), "%"))
-
-set4Win_perc <- mean(tableSet4$set4Win == 1) * 100
-cat(paste0("Percentage of win in the fifth set is: ", round(set4Win_perc, 2), "%"))
-
-set5Win_perc <- mean(tableSet5$set5Win == 1) * 100
-cat(paste0("Percentage of win in the fifth set is: ", round(set5Win_perc, 2), "%"))
+newTable5 <- results[, c("tournamentStart", "rank")]
+newTable5 <- na.omit(newTable5)
 
 
+# Find the lowest rank and the number of times it appears
+lowestRank <- min(newTable5$rank)
+lowestRankCount <- sum(newTable5$rank == lowestRank)
 
-
-for (Z in 1:5) {
-  tableSetZ <- results[, c(paste0("gamesLostSet",Z), paste0("gamesWonSet",Z))]
-  tableSetZ <- tableSetZ[complete.cases(tableSetZ), ]
-  tableSetZ$setZWin <- ifelse(tableSetZ$gamesWonSetZ > tableSetZ$gamesLostSetZ, 1, 0)
-  
-  barSetZ <- ggplot(tableSetZ, aes(x = factor(setZWin))) +
-    geom_bar(fill = "blue") +
-    labs(title = paste0("Set ", Z, " Win Distribution"), x = paste0("Set ", Z, " Win"), y = "Count")
-  
-  setZWinPercentage <- mean(tableSetZ$setZWin == 1) * 100
-  cat(paste0("Percentage of win in the ", Z, "th set is: ", round(setZWin_perc, 2), "%\n"))
+# Find the maximum number of consecutive times the lowest rank appears
+consecutiveCount <- 0
+maxConsecutiveCount <- 0
+for (r in newTable5$rank) {
+  if (r == lowestRank) {
+    consecutiveCount <- consecutiveCount + 1
+    if (consecutiveCount > maxConsecutiveCount) {
+      maxConsecutiveCount <- consecutiveCount
+    }
+  } else {
+    consecutiveCount <- 0
+  }
 }
-require(gridExtra)
-grid.arrange(barSet1, barSet2, barSet3, barSet4, barSet5,  ncol=5)
