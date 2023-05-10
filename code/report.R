@@ -382,6 +382,16 @@ results <- results %>%
 library(dplyr)
 library(ggplot2)
 library(lubridate)
+
+#general information about the player 
+
+
+# Filter the dataset to include only rows where the 'name' variable matches the input player name
+informationPlayer <- subset(players, name == playerName, select = -link)
+
+
+
+
 # how much money the player has earned 
 
 newTable <- results[, c("tournamentStart", "priceMoneyUSDollar", "tournament")]
