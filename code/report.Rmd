@@ -8,7 +8,15 @@ output:
 ```{r, include = FALSE, warning = FALSE}
 setwd('../')
 source('code/report.R')
+source('data/playersCleaned')
 ```
+
+
+
+
+
+
+<br>
 
 ---
 title: 'A Detailed Analysis of `r playerName`'s Results'
@@ -19,92 +27,48 @@ date: '5/26/2023'
 
 **How much money has the player earned**
 
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-print(paste0(playerName, ' has earned ', totalMoneyEarned, ' Dollars throughout his whole career.'))
-```
+`r playerName`  has earned `r totalMoneyEarned` Dollars throughout his whole career. 
 
+<br>
 
-
-**...**
+**at which age the player earned the most **
 
 ```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-# Here: compute your code
+require(gridExtra)
+grid.arrange(ggplot1,  ncol=1)
 ```
-
-Here: write your comment
+`r playerName` has earned the most at age `r maxAge` with earnings of $ `r maxEarnings`
 
 <br>
 
 **in which country has the player played the most**
 
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-newTable2 <- results[, c("tournamentStart", "tournamentCountry")]
-newTable2 <- unique(newTable2)
-countryMostPlayed <- results %>%
-  count(tournamentCountry) %>%
-  top_n(1, n)
+The country in which `r playerName` has played the most is `r MostCountryPlayedIn`.
 
-print(paste0('The country in which ', playerName, ' has played the most is:', countryMostPlayed$tournamentCountry))
-```
-
-Here: write your comment
 
 <br>
 
 **win percentage on outdoor and indoor**
 
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-newTable3 <- results[, c("tournamentStart", "win", "outdoor")]
-newTable3 <- na.omit(newTable3)
-
-#outdoor
-percentage1 <- newTable3 %>% 
-  filter(outdoor == 1) %>% 
-  summarise(percentage = mean(win == 1)) %>% 
-  pull(percentage)
-#indoor 
-percentage2 <- newTable3 %>% 
-  filter(outdoor == 0) %>% 
-  summarise(percentage = mean(win == 1)) %>% 
-  pull(percentage)
-
-print(paste0(playerName, ' has a win percentage of ', round(percentage1, 4), ' on outdoor fields and a win percentage of ', round(percentage2, 4), ' on indoor fields'))
-
-```
-
-Here: write your comment
+`r playerName` has a win percentage of `r percentage1` % on outdoor and a win percentage of `r percentage2` % on indoor fields. 
 
 
 <br>
 
-**the highest World position achived by the player and for how long he was there**
+**the win percentage in each set**
 
 ```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-# Print the results
-cat(paste0("The highest World ranking achived by ", playerName, " is ", lowestRank, "\n"))
-cat(paste0("He was at this world ranking in numbers of weeks : ", lowestRankCount, "\n"))
-cat(paste0("The maximum number of consecutive weeks he was on that ranking: ", maxConsecutiveCount, "\n"))
+require(gridExtra)
+grid.arrange(barSet1, barSet2, barSet3, barSet4, barSet5,  ncol=5)
 
 ```
 
-Here: write your comment
+`r playerName` has a win percentage in the first set of `r set1WinPercentage` %, in the second one set it is `r set2WinPercentage` %, in the third one it is `r set3WinPercentage` %, in the fourth one `r set4WinPercentage` %, and in the fifth one `r set5WinPercentage` %.
 
 <br>
 
-**...**
+**the highest World position achieved by the player and for how long he was there**
 
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-# Here: compute your code
-```
-
-Here: write your comment
+`r playerName` has his highest world ranking at `r lowestRank`. His has had this position for `r lowestRankCount` weeks. the maximum number of consecuitive weeks he was on that ranking is `r maxConsecuitiveCount`
 
 <br>
-
-**...**
-
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-# Here: compute your code
-```
-
-Here: write your comment
