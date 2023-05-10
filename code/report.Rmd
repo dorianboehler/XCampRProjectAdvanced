@@ -1,5 +1,8 @@
 ---
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ```{r, include = FALSE, warning = FALSE}
@@ -14,3 +17,94 @@ date: '5/26/2023'
 ---
 
 
+**How much money has the player earned**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+print(paste0(playerName, ' has earned ', totalMoneyEarned, ' Dollars throughout his whole career.'))
+```
+
+
+
+**...**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Here: compute your code
+```
+
+Here: write your comment
+
+<br>
+
+**in which country has the player played the most**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+newTable2 <- results[, c("tournamentStart", "tournamentCountry")]
+newTable2 <- unique(newTable2)
+countryMostPlayed <- results %>%
+  count(tournamentCountry) %>%
+  top_n(1, n)
+
+print(paste0('The country in which ', playerName, ' has played the most is:', countryMostPlayed$tournamentCountry))
+```
+
+Here: write your comment
+
+<br>
+
+**win percentage on outdoor and indoor**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+newTable3 <- results[, c("tournamentStart", "win", "outdoor")]
+newTable3 <- na.omit(newTable3)
+
+#outdoor
+percentage1 <- newTable3 %>% 
+  filter(outdoor == 1) %>% 
+  summarise(percentage = mean(win == 1)) %>% 
+  pull(percentage)
+#indoor 
+percentage2 <- newTable3 %>% 
+  filter(outdoor == 0) %>% 
+  summarise(percentage = mean(win == 1)) %>% 
+  pull(percentage)
+
+print(paste0(playerName, ' has a win percentage of ', round(percentage1, 4), ' on outdoor fields and a win percentage of ', round(percentage2, 4), ' on indoor fields'))
+
+```
+
+Here: write your comment
+
+
+<br>
+
+**the highest World position achived by the player and for how long he was there**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Print the results
+cat(paste0("The highest World ranking achived by ", playerName, " is ", lowestRank, "\n"))
+cat(paste0("He was at this world ranking in numbers of weeks : ", lowestRankCount, "\n"))
+cat(paste0("The maximum number of consecutive weeks he was on that ranking: ", maxConsecutiveCount, "\n"))
+
+```
+
+Here: write your comment
+
+<br>
+
+**...**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Here: compute your code
+```
+
+Here: write your comment
+
+<br>
+
+**...**
+
+```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+# Here: compute your code
+```
+
+Here: write your comment
