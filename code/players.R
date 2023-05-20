@@ -2,7 +2,7 @@
 # Script to scrape and clean the list of players from atptour.com (takes about 3 hours)
 ##################################################
 
-# SET UP ------------------------------------------------------------------
+# 1. SET UP ------------------------------------------------------------------
 # Clean the environment
 remove(list = ls())
 
@@ -12,7 +12,7 @@ library(rvest)
 library(tidyverse)
 library(xml2)
 
-# SCRAPE THE LIST OF PLAYERS FROM THE WEBSITE -----------------------------
+# 2. SCRAPE THE LIST OF PLAYERS FROM THE WEBSITE -----------------------------
 # In order to have a complete list of players that have played since 1973, 
 # we will download the year-end ranking for every year. Unfortunately,
 # we need to provide dates from the drop-down menu in the links to the year-end rankings.
@@ -257,7 +257,7 @@ remove(errors)
 # because the player does not have a profile.
 # Let us ignore this player.
 
-# CLEAN THE LIST OF PLAYERS -----------------------------------------------
+# 3. CLEAN THE LIST OF PLAYERS -----------------------------------------------
 # active: Change the data type to numeric
 players$active <- as.numeric(players$active)
 
