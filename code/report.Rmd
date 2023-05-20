@@ -1,78 +1,410 @@
 ---
-output:
-  pdf_document: default
-  html_document:
-    df_print: paged
+output: pdf_document
 ---
 
-```{r, include = FALSE, warning = FALSE}
-setwd('../')
-source('code/report.R')
-source('data/playersCleaned')
-```
-
 ---
-title: 'A Detailed Analysis of `r playerName`'s Results'
-author: 'Noah Baiguini, Dorian Böhler'
-date: '5/26/2023'
+author: "Noah Baiguini, Dorian Böhler"
+title: "A Detailed Analysis of `r playerName`'s Results"
+date: "`r format(Sys.time(), '%d.%m.%Y')`"
 ---
 
+```{r, echo = FALSE, results = 'asis'}
+cat('This report is about **', playerName, '**, who is a tennis player from ', countrycode(overview$country, origin = 'ioc', destination = 'country.name'), '. He turned pro in ', overview$turnedPro, ' and is ', sep = '')
+if(overview$active == 1) {
+  cat('still active')
+} else {
+  cat('not active any more')
+}
+cat('. He was born on ', format(overview$birthday, '%d %B %Y'), ', so he is now ', floor(time_length(Sys.Date() - overview$birthday, 'years')), ' years old.\n', sep = '')
 
-**General information about the player **
+cat('\n', playerName, ' is a ', sep = '')
+if(overview$lefty == 1) {
+  cat('lefty')
+} else {
+  cat('righty')
+}
+cat(' and has a ')
+if(overview$oneHandedBackhand == 1) {
+  cat('one-handed')
+} else {
+  cat('two-handed')
+}
+cat(' backhand.\n')
 
-Here some ground information about `r playerName`
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-require(gridExtra)
-grid.arrange(informationPlayer ,  ncol=1)
+cat('\nHe ')
+
+if(overview$active == 0) {
+  cat('played', numberOfMatches, 'matches in total.')
+} else if(overview$active == 1) {
+  cat('has played', numberOfMatches, 'matches so far.')
+}
+
+cat(' The highest ranking achieved is ', highestRank, '.', sep = '')
 ```
 
+# Winning percentages
+Here are a few interesting match winning percentages:
 
-<br>
+* Total: `r winningPercentage`
+* Outdoor: `r winningPercentageOutdoor`
+* Indoor: `r winningPercentageIndoor`
+* Hard court: `r winningPercentageHard`
+* Clay court: `r winningPercentageClay`
+* Grass court: `r winningPercentageGrass`
+* Best of three: `r winningPercentageBestOfThree`
+* Best of five: `r winningPercentageBestOfFive`
+* Against players with a one-handed backhand: `r winningPercentageOneHandedBackhand`
+* Against players with a two-handed backhand: `r winningPercentageTwoHandedBackhand`
+* Against top 10 players: `r winningPercentageTop10`
 
-**How much money has the player earned**
+&nbsp;
 
-`r playerName`  has earned `r totalMoneyEarned` Dollars throughout his whole career. 
+The following figure shows the number of first, second, third, fourth, and fifth sets played and won including the winning percentages:
 
-<br>
+&nbsp;
 
-**at which age the player earned the most **
-
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-require(gridExtra)
-grid.arrange(ggplot1,  ncol=1)
-```
-`r playerName` has earned the most at age `r maxAge` with earnings of $ `r maxEarnings`
-
-<br>
-
-**in which country has the player played the most**
-
-The country in which `r playerName` has played the most is `r MostCountryPlayedIn`.
-
-
-<br>
-
-**win percentage on outdoor and indoor**
-
-`r playerName` has a win percentage of `r percentage1` % on outdoor and a win percentage of `r percentage2` % on indoor fields. 
-
-
-<br>
-
-**the win percentage in each set**
-
-```{r comparisons, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-require(gridExtra)
-grid.arrange(barSet1, barSet2, barSet3, barSet4, barSet5,  ncol=5)
-
+```{r, echo = FALSE, fig.height = 2.5}
+plotWinningPercentageSets
 ```
 
-`r playerName` has a win percentage in the first set of `r set1WinPercentage` %, in the second one set it is `r set2WinPercentage` %, in the third one it is `r set3WinPercentage` %, in the fourth one `r set4WinPercentage` %, and in the fifth one `r set5WinPercentage` %.
+&nbsp;
 
-<br>
+In the following figure, you can see the winning percentages (matches, sets, and games) over time:
 
-**the highest World position achieved by the player and for how long he was there**
+&nbsp;
 
-`r playerName` has his highest world ranking at `r lowestRank`. His has had this position for `r lowestRankCount` weeks. the maximum number of consecuitive weeks he was on that ranking is `r maxConsecuitiveCount`
+```{r, echo = FALSE, message = FALSE, fig.height = 3.5}
+plotRatio4
+```
 
-<br>
+&nbsp;
+
+# Tournaments
+The tournament(s) with the best match winning percentage is (are): `r winningPercentageTournaments`.
+
+The match winning percentages at Grand Slams are as follows:
+
+```{r, echo = FALSE, results = 'asis'}
+kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Percentage'))
+```
+
+# Price Money
+`r playerName`'s total price money is `r priceMoneyUSDollarTotal`. On the next page, you can see how it developed over time.
+
+&nbsp;
+
+```{r, echo = FALSE, fig.height = 3.5}
+plotPriceMoneyUSDollarTotalYearly
+```
+
+&nbsp;
+
+```{r, echo = FALSE, results = 'asis'}
+if(overview$active == 1) {
+  cat('It should be noted that', year(Sys.Date()), 'is not over yet.')
+}
+```
+
+# What affects the winning probability of `r playerName`?
+We have estimated the effect of some variables on the winning probability, using a linear probability model. The following table shows the results:
+
+```{r, echo = FALSE, results = 'asis'}
+kable(lpm %>% mutate(p.value = pvalue(p.value)), col.names = c('Predictor', 'B', 'SE', 't', 'p'), digits = c(0, 2, 3, 3, 3))
+```
+
+The base group is `r levels(results$surface)[1]` for the surface. 
+
+Here are a few interesting observations:
+
+```{r, echo = FALSE, results = 'asis'}
+if(overview$active == 0) {
+  if(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 | round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0) {
+    cat('* It did not influence the winning probability whether', playerName, 'played at home or not.\n')
+  } else {
+    cat('*', playerName, 'played ')
+    
+    if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
+      cat('better ')
+    } else {
+      cat('worse ')
+    }
+    
+    cat('at home.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0) {
+    cat('*', playerName, 'played better ')
+    
+    if(lpm$estimate[lpm$term == 'Outdoor'] > 0) {
+      cat('outdoor.\n')
+    } else {
+      cat('indoor.\n')
+    }
+  }
+  
+  cat('* It seems that the order of preference for the surface was: ')
+  
+  if(lpm$estimate[lpm$term == 'Surface: Clay'] < 0 &
+     lpm$estimate[lpm$term == 'Surface: Grass'] < lpm$estimate[lpm$term == 'Surface: Clay']) {
+    cat('Hard, Clay, and Grass (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Grass'] < 0 &
+            lpm$estimate[lpm$term == 'Surface: Clay'] < lpm$estimate[lpm$term == 'Surface: Grass']) {
+    cat('Hard, Grass, and Clay (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Grass'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Clay'] < 0) {
+    cat('Grass, Hard, and Clay (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Clay'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Grass'] < 0) {
+    cat('Clay, Hard, and Grass (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Clay'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Grass'] > lpm$estimate[lpm$term == 'Surface: Clay']) {
+    cat('Grass, Clay, and Hard (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Grass'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Clay'] > lpm$estimate[lpm$term == 'Surface: Grass']) {
+    cat('Clay, Grass, and Hard (ignoring Carpet).\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Total Price Money (m$)'] < 0.1 & round(lpm$estimate[lpm$term == 'Total Price Money (m$)'], digits = 2) != 0) {
+    cat('*', playerName, 'played ')
+    
+    if(lpm$estimate[lpm$term == 'Total Price Money (m$)'] > 0) {
+      cat('better ')
+    } else {
+      cat('worse ')
+    }
+    
+    cat('when there was more money to win.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Rank'] > 0.1 | round(lpm$estimate[lpm$term == 'Opponent: Rank'], digits = 2) == 0 ) {
+    cat('* The rank of the opponent did not substantially affect the winning probability.\n')
+  } else {
+    if(lpm$estimate[lpm$term == 'Opponent: Rank'] > 0) {
+      cat('* The winning probability increased ')
+    } else {
+      cat('* Surprisingly, the winning probability decreased ')
+    }
+    
+    cat('with the rank of the opponent.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Age'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Age'], digits = 2) != 0) {
+    cat('* The winning probability ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: Age'] > 0) {
+      cat('increased ')
+    } else {
+      cat('decreased ')
+    }
+    
+    cat('with the age of the opponent.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Height'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Height'], digits = 2) != 0) {
+    cat('* The winning probability ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: Height'] > 0) {
+      cat('increased ')
+    } else {
+      cat('decreased ')
+    }
+    
+    cat('with the height of the opponent.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Lefty'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Lefty'], digits = 2) != 0) {
+    cat('* The winning probability was ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: Lefty'] > 0) {
+      cat('larger ')
+    } else {
+      cat('smaller ')
+    }
+    
+    cat('against lefties.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: One Handed Backhand'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'], digits = 2) != 0) {
+    cat('* The winning probability was larger against players with a ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'] > 0) {
+      cat('one-handed ')
+    } else {
+      cat('two-handed ')
+    } 
+    
+    cat('backhand.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Best of Five'] < 0.1 & round(lpm$estimate[lpm$term == 'Best of Five'], digits = 2) != 0) {
+    cat('* The winning probability was larger in ')
+    
+    if(lpm$estimate[lpm$term == 'Best of Five'] > 0) {
+      cat('best-of-five ')
+    } else {
+      cat('best-of-three ')
+    }
+    
+    cat('matches.\n')
+  }
+} else if(overview$active == 1) {
+  if(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 | round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0) {
+    cat('* It does not influence the winning probability whether', playerName, 'plays at home or not.\n')
+  } else {
+    cat('*', playerName, 'plays ')
+    
+    if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
+      cat('better ')
+    } else {
+      cat('worse ')
+    }
+    
+    cat('at home.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0) {
+    cat('*', playerName, 'plays better ')
+    
+    if(lpm$estimate[lpm$term == 'Outdoor'] > 0) {
+      cat('outdoor.\n')
+    } else {
+      cat('indoor.\n')
+    }
+  }
+  
+  cat('* It seems that the order of preference for the surface is: ')
+  
+  if(lpm$estimate[lpm$term == 'Surface: Clay'] < 0 &
+     lpm$estimate[lpm$term == 'Surface: Grass'] < lpm$estimate[lpm$term == 'Surface: Clay']) {
+    cat('Hard, Clay, and Grass (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Grass'] < 0 &
+            lpm$estimate[lpm$term == 'Surface: Clay'] < lpm$estimate[lpm$term == 'Surface: Grass']) {
+    cat('Hard, Grass, and Clay (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Grass'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Clay'] < 0) {
+    cat('Grass, Hard, and Clay (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Clay'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Grass'] < 0) {
+    cat('Clay, Hard, and Grass (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Clay'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Grass'] > lpm$estimate[lpm$term == 'Surface: Clay']) {
+    cat('Grass, Clay, and Hard (ignoring Carpet).\n')
+  } else if(lpm$estimate[lpm$term == 'Surface: Grass'] > 0 &
+            lpm$estimate[lpm$term == 'Surface: Clay'] > lpm$estimate[lpm$term == 'Surface: Grass']) {
+    cat('Clay, Grass, and Hard (ignoring Carpet).\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Total Price Money (m$)'] < 0.1 & round(lpm$estimate[lpm$term == 'Total Price Money (m$)'], digits = 2) != 0) {
+    cat('*', playerName, 'plays ')
+    
+    if(lpm$estimate[lpm$term == 'Total Price Money (m$)'] > 0) {
+      cat('better ')
+    } else {
+      cat('worse ')
+    }
+    
+    cat('when there is more money to win.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Rank'] > 0.1 | round(lpm$estimate[lpm$term == 'Opponent: Rank'], digits = 2) == 0 ) {
+    cat('* The rank of the opponent does not substantially affect the winning probability.\n')
+  } else {
+    if(lpm$estimate[lpm$term == 'Opponent: Rank'] > 0) {
+      cat('* The winning probability increases ')
+    } else {
+      cat('* Surprisingly, the winning probability decreases ')
+    }
+    
+    cat('with the rank of the opponent.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Age'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Age'], digits = 2) != 0) {
+    cat('* The winning probability ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: Age'] > 0) {
+      cat('increases ')
+    } else {
+      cat('decreases ')
+    }
+    
+    cat('with the age of the opponent.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Height'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Height'], digits = 2) != 0) {
+    cat('* The winning probability ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: Height'] > 0) {
+      cat('increases ')
+    } else {
+      cat('decreases ')
+    }
+    
+    cat('with the height of the opponent.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: Lefty'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Lefty'], digits = 2) != 0) {
+    cat('* The winning probability is ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: Lefty'] > 0) {
+      cat('larger ')
+    } else {
+      cat('smaller ')
+    }
+    
+    cat('against lefties.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Opponent: One Handed Backhand'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'], digits = 2) != 0) {
+    cat('* The winning probability is larger against players with a ')
+    
+    if(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'] > 0) {
+      cat('one-handed ')
+    } else {
+      cat('two-handed ')
+    } 
+    
+    cat('backhand.\n')
+  }
+  
+  if(lpm$p.value[lpm$term == 'Best of Five'] < 0.1 & round(lpm$estimate[lpm$term == 'Best of Five'], digits = 2) != 0) {
+    cat('* The winning probability is larger in ')
+    
+    if(lpm$estimate[lpm$term == 'Best of Five'] > 0) {
+      cat('best-of-five ')
+    } else {
+      cat('best-of-three ')
+    }
+    
+    cat('matches.\n')
+  }
+}
+
+cat('\nIt should be noted that the R-squared is', rSquared)
+
+if(rSquared < 0.1) {
+  cat(', which is very low.')
+} else {
+  cat('.')
+}
+```
+
+# Wins With Fewer Games Than the Opponent
+```{r, echo = FALSE, results = 'asis'}
+if(overview$active == 0) {
+  if(numberOfUnfairWins > 0) {
+    cat(playerName, 'won', numberOfUnfairWins, 'matches with fewer games than the opponent. You can see them in the following table:\n')
+    
+    kable(unfairWins)
+  } else {
+    cat(playerName, 'did not win any match with fewer games than the opponent.')
+  }
+} else if(overview$active == 1) {
+  if(numberOfUnfairWins > 0) {
+    cat(playerName, 'has won', numberOfUnfairWins, 'matches with fewer games than the opponent so far. You can see them in the following table:\n')
+    
+    kable(unfairWins)
+  } else {
+    cat(playerName, 'has not won any match with fewer games than the opponent yet.')
+  }
+}
+```
