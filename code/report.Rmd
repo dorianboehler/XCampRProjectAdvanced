@@ -1,31 +1,33 @@
 ---
-output:
-  PDF_document:
-    theme: sandstone
+output: pdf_document
 ---
-\begin{center}
-\end{center}
-------------------------------------------------------------
-University of St. Gallen
-------------------------------------------------------------
 
-School of Management, Economics, Law
-Social Sciences, International Affairs, and Computer Science
-------------------------------------------------------------
-
-
-**A Detailed Analysis of 'r playerName' ’s Results**
-                   
-Noah Baiguini, Dorian Böhler
- (21-619-507), (XX-XXX-XXX)
+\centerline{\LARGE University of St. Gallen}
+\vspace{0.5cm}
+\centerline{\Large School of Management, Economics, Law,}
+\centerline{\Large Social Sciences, International Affairs, and Computer Science}
 
 
 
-Skills: Programming
-Mr. Mario Silic 
-Date: "`r format(Sys.time(), '%d.%m.%Y')`"
-\end{center}
+\vspace{3cm}
+
+\centerline{\LARGE A Detailed Analysis of `r playerName`’s Results}
+
+\vspace{3cm}
+
+\centerline{\Large Noah Baiguini, Dorian Böhler}
+\vspace{0.5cm}
+\centerline{\large   (21-619-507), (21-619-507)}
+
+\vspace{3cm}
+
+\centerline{\LARGE \today}
+\vspace{0.5cm}
+\centerline{\Large Skills: Programming}
+\vspace{0.5cm}
+\centerline{\Large Mr. Mario Silic}
 \newpage
+
   
   
 ```{r, echo = FALSE, results = 'asis'}
@@ -84,11 +86,12 @@ The following figure shows the number of first, second, third, fourth, and fifth
 
 &nbsp;
 
-```{r, echo = FALSE, fig.height = 2.5}
+```{r, echo = FALSE, fig.height = 3.5}
 plotWinningPercentageSets
 ```
 
 &nbsp;
+\newpage
 
 In the following figure, you can see the winning percentages (matches, sets, and games) over time:
 
@@ -100,9 +103,20 @@ plotRatio4
 
 &nbsp;
 
+\vspace{1cm}
+
+In the following figure, you can see the accumulation of tournament won, the finals `r playerName` played in but lost and his win percentage in the finals:
+
+&nbsp;
+
+```{r, echo = FALSE, fig.height = 3.5}
+finalWin
+```
+&nbsp;
+
 # Tournaments
 The tournament(s) with the best match winning percentage is (are): `r winningPercentageTournaments`.
-
+\vspace{1cm}
 The match winning percentages at Grand Slams are as follows:
 
 ```{r, echo = FALSE, results = 'asis'}
@@ -111,13 +125,6 @@ kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Pe
 
 &nbsp;
 
-# Win in Finals
-In the following figure, you can see the accumulation of tournament won, the finals `r playerName` played in but lost and his win percentage in the finals:
-```{r, echo = FALSE, fig.height = 2.5}
-finalWin
-```
-
-&nbsp;
 
 # Price Money
 `r playerName`'s total price money is `r priceMoneyUSDollarTotal`. On the next page, you can see how it developed over time.
@@ -136,6 +143,7 @@ if(overview$active == 1) {
 }
 ```
 
+\newpage
 # What affects the winning probability of `r playerName`?
 We have estimated the effect of some variables on the winning probability, using a linear probability model. The following table shows the results:
 
