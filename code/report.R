@@ -496,12 +496,21 @@ winningPercentageSets <- results %>%
 plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
   geom_bar(aes(y = numberOfSetsPlayed), stat = 'identity', fill = 'grey') +
   geom_bar(aes(y = numberOfSetsWon), stat = 'identity', fill = 'darkgreen') +
-  geom_text(aes(y = numberOfSetsWon, label = winningPercentage), nudge_y = 10) +
+  geom_text(aes(y = 0, label = winningPercentage), vjust = -6) +
   labs(title = 'Number of Sets Played and Won',
        x = 'Set',
        y = NULL) +
   theme_minimal() +
-  theme(plot.background = element_rect(colour = 'black'))
+  theme(
+    plot.background = element_rect(colour = 'black'),
+    plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    plot.margin = margin(1, 1, 0.5, 1, "cm"),
+    axis.title = element_text(size = 10)
+  )
+plotWinningPercentageSets
+
+
 
 remove(winningPercentageSets, i, j)
 
@@ -593,8 +602,15 @@ plotRatio4 <- ggplot(time, aes(x = monthYear, y = winningPercentage, colour = sc
        y = 'Winning Percentage',
        colour = 'Score Level') +
   theme_minimal() +
-  theme(legend.position = 'top',
-        plot.background = element_rect(colour = 'black'))
+  theme(
+    legend.position = 'top',
+    plot.background = element_rect(colour = 'black'),
+    plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+    axis.title = element_text(size = 10)
+  )
+
 
 remove(gamesTime, matchesTime, setsTime, time, level)
 
@@ -692,11 +708,18 @@ plotPriceMoneyUSDollarTotalYearly <- ggplot() +
   scale_x_continuous(breaks = seq(min(priceMoneyUSDollarTotalYearly$year), max(priceMoneyUSDollarTotalYearly$year), 3)) +
   scale_y_continuous(labels = comma_format(big.mark = '\'')) +
   labs(title = 'Total Price Money per Year',
-       x = 'Year',
+       x = '',
        y = 'Total Price Money (K$)') +
   theme_minimal() +
-  theme(legend.position = 'none',
-        plot.background = element_rect(colour = 'black'))
+  theme(
+    legend.position = 'none',
+    plot.background = element_rect(colour = 'black'),
+    plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+    axis.title = element_text(size = 10)
+  )
+
 
 remove(priceMoneyUSDollarTotalYearly, temp)
 
@@ -811,25 +834,25 @@ resultsFiltered$tournamentStart <- as.Date(resultsFiltered$tournamentStart)
 finals_win_percentage <- round(sum(resultsFiltered$win[resultsFiltered$round == "Finals"]) / sum(resultsFiltered$round == "Finals") * 100,2)
 
 # Create the line chart
-finalWin <- 
-  ggplot(resultsFiltered, aes(x = tournamentStart, y = cumulativeNbWins)) +
+finalWin <- ggplot(resultsFiltered, aes(x = tournamentStart, y = cumulativeNbWins)) +
   geom_line(color = "steelblue", size = 1.5) +
   geom_point(data = subset(resultsFiltered, round == "Finals" & win == 0),
              color = "black", size = 3, shape = 4) +
   labs(x = "Tournament Start", y = "Cumulative Number of Wins",
        title = "Cumulative Wins Over Time",
-       subtitle = paste0("Based on Finals and Win Status\nFinals Win Percentage: ", finals_win_percentage, "%"),
-       caption = paste0("Data Source: Your Dataset\nFinals Win Percentage: ", finals_win_percentage, "%")) +
+       subtitle = paste0("Based on Finals and Win Status Finals Win Percentage: ", finals_win_percentage, "%")) +
   theme_minimal() +
-  theme(plot.title = element_text(size = 18, face = "bold"),
-        plot.subtitle = element_text(size = 14),
-        plot.caption = element_text(size = 10, color = "gray"),
-        axis.title = element_text(size = 12),
-        axis.text = element_text(size = 10),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 10))
-
-
+  theme(
+    plot.title = element_text(size = 14, hjust = 0.5),
+    plot.subtitle = element_text(size = 10, hjust = 0.5),
+    plot.caption = element_text(size = 10, color = "gray"),
+    axis.title = element_text(size = 10),
+    axis.text = element_text(size = 8), 
+    legend.title = element_blank(),
+    legend.text = element_text(size = 10),
+    plot.background = element_rect(colour = 'black'),
+    plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")
+  )
 
 
 # 6. CREATE A REPORT ---------------------------------------------------------
