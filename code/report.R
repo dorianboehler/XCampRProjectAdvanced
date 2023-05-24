@@ -496,7 +496,7 @@ winningPercentageSets <- results %>%
 plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
   geom_bar(aes(y = numberOfSetsPlayed), stat = 'identity', fill = 'grey') +
   geom_bar(aes(y = numberOfSetsWon), stat = 'identity', fill = 'darkgreen') +
-  geom_text(aes(y = 0, label = winningPercentage), vjust = -6) +
+  geom_text(aes(y = 0, label = winningPercentage), vjust = -4.5) +
   labs(title = 'Number of Sets Played and Won',
        x = 'Set',
        y = NULL) +
@@ -505,7 +505,7 @@ plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
     plot.background = element_rect(colour = 'black'),
     plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
     plot.subtitle = element_text(size = 10, hjust = 0.5),
-    plot.margin = margin(1, 1, 0.5, 1, "cm"),
+    plot.margin = margin(1, 1, 1, 1, "cm"),
     axis.title = element_text(size = 10)
   )
 plotWinningPercentageSets
