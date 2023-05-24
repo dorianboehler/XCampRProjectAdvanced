@@ -1,13 +1,33 @@
 ---
-output: pdf_document
+output:
+  PDF_document:
+    theme: sandstone
 ---
+\begin{center}
+\end{center}
+------------------------------------------------------------
+University of St. Gallen
+------------------------------------------------------------
 
----
-author: "Noah Baiguini, Dorian Böhler"
-title: "A Detailed Analysis of `r playerName`'s Results"
-date: "`r format(Sys.time(), '%d.%m.%Y')`"
----
+School of Management, Economics, Law
+Social Sciences, International Affairs, and Computer Science
+------------------------------------------------------------
 
+
+**A Detailed Analysis of 'r playerName' ’s Results**
+                   
+Noah Baiguini, Dorian Böhler
+ (21-619-507), (XX-XXX-XXX)
+
+
+
+Skills: Programming
+Mr. Mario Silic 
+Date: "`r format(Sys.time(), '%d.%m.%Y')`"
+\end{center}
+\newpage
+  
+  
 ```{r, echo = FALSE, results = 'asis'}
 cat('This report is about **', playerName, '**, who is a tennis player from ', countrycode(overview$country, origin = 'ioc', destination = 'country.name'), '. He turned pro in ', overview$turnedPro, ' and is ', sep = '')
 if(overview$active == 1) {
@@ -41,6 +61,7 @@ if(overview$active == 0) {
 
 cat(' The highest ranking achieved is ', highestRank, '.', sep = '')
 ```
+
 
 # Winning percentages
 Here are a few interesting match winning percentages:
@@ -87,6 +108,16 @@ The match winning percentages at Grand Slams are as follows:
 ```{r, echo = FALSE, results = 'asis'}
 kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Percentage'))
 ```
+
+&nbsp;
+
+# Win in Finals
+In the following figure, you can see the accumulation of tournament won, the finals `r playerName` played in but lost and his win percentage in the finals:
+```{r, echo = FALSE, fig.height = 2.5}
+finalWin
+```
+
+&nbsp;
 
 # Price Money
 `r playerName`'s total price money is `r priceMoneyUSDollarTotal`. On the next page, you can see how it developed over time.
