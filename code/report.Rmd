@@ -2,6 +2,7 @@
 output: pdf_document
 ---
 
+
 \centerline{\LARGE University of St. Gallen}
 \vspace{0.5cm}
 \centerline{\Large School of Management, Economics, Law,}
@@ -17,7 +18,7 @@ output: pdf_document
 
 \centerline{\Large Noah Baiguini, Dorian Böhler}
 \vspace{0.5cm}
-\centerline{\large   (21-619-507), (21-619-507)}
+\centerline{\large   (21-619-507), (15-613-433)}
 
 \vspace{3cm}
 
@@ -68,17 +69,20 @@ cat(' The highest ranking achieved is ', highestRank, '.', sep = '')
 # Winning percentages
 Here are a few interesting match winning percentages:
 
-* Total: `r winningPercentage`
-* Outdoor: `r winningPercentageOutdoor`
-* Indoor: `r winningPercentageIndoor`
-* Hard court: `r winningPercentageHard`
-* Clay court: `r winningPercentageClay`
-* Grass court: `r winningPercentageGrass`
-* Best of three: `r winningPercentageBestOfThree`
-* Best of five: `r winningPercentageBestOfFive`
-* Against players with a one-handed backhand: `r winningPercentageOneHandedBackhand`
-* Against players with a two-handed backhand: `r winningPercentageTwoHandedBackhand`
-* Against top 10 players: `r winningPercentageTop10`
+| Category                                | Winning Percentage |
+|-----------------------------------------|-------------------:|
+| Total                                   |           `r winningPercentage` |
+| Outdoor                                 |           `r winningPercentageOutdoor` |
+| Indoor                                  |           `r winningPercentageIndoor` |
+| Hard court                              |           `r winningPercentageHard` |
+| Clay court                              |           `r winningPercentageClay` |
+| Grass court                             |           `r winningPercentageGrass` |
+| Best of three                           |           `r winningPercentageBestOfThree` |
+| Best of five                            |           `r winningPercentageBestOfFive` |
+| Against players with a one-handed backhand |      `r winningPercentageOneHandedBackhand` |
+| Against players with a two-handed backhand |      `r winningPercentageTwoHandedBackhand` |
+| Against top 10 players                  |      `r winningPercentageTop10` |
+
 
 &nbsp;
 
@@ -105,15 +109,6 @@ plotRatio4
 
 \vspace{1cm}
 
-In the following figure, you can see the accumulation of tournament won, the finals `r playerName` played in but lost and his win percentage in the finals:
-
-&nbsp;
-
-```{r, echo = FALSE, fig.height = 3.5}
-finalWin
-```
-&nbsp;
-
 # Tournaments
 The tournament(s) with the best match winning percentage is (are): `r winningPercentageTournaments`.
 \vspace{1cm}
@@ -124,14 +119,22 @@ kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Pe
 ```
 
 &nbsp;
-
-
-# Price Money
-`r playerName`'s total price money is `r priceMoneyUSDollarTotal`. On the next page, you can see how it developed over time.
+\newpage
+In the following figure, you can see the accumulation of tournament won,but also the finals `r playerName` lost, the crosses:
 
 &nbsp;
 
-```{r, echo = FALSE, fig.height = 3.5}
+```{r, echo = FALSE, fig.height = 3}
+finalWin
+```
+&nbsp;
+
+# Price Money
+`r playerName`'s total price money is `r priceMoneyUSDollarTotal`.You can see how it developed over time.
+
+&nbsp;
+
+```{r, echo = FALSE, fig.height = 3}
 plotPriceMoneyUSDollarTotalYearly
 ```
 
