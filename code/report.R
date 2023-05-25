@@ -18,6 +18,7 @@ library(tidyverse)
 library(zoo)
 library(dplyr)
 library(ggplot2)
+library("tinytex")
 # Set fixed variables
 australienDollarToUSDollar <- 0.6761 # 06.05.2023
 euroToUSDollar <- 1.1210 # 06.05.2023
@@ -36,8 +37,8 @@ View(players)
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Enter the player's name and birthday
-playerName <- 'Rafael Nadal' # !!!
-playerBirthday <- as.Date('1986-06-03') # !!!
+playerName <- 'Dominic Thiem' # !!!
+playerBirthday <- as.Date('1993-09-03') # !!!
 
 # Extract the general information on the player
 overview <- filter(players, name == playerName & birthday == playerBirthday)
@@ -508,9 +509,6 @@ plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
     plot.margin = margin(1, 1, 1, 1, "cm"),
     axis.title = element_text(size = 10)
   )
-plotWinningPercentageSets
-
-
 
 remove(winningPercentageSets, i, j)
 
@@ -793,6 +791,8 @@ unfairWins$Result <- str_replace_all(unfairWins$Result, fixed(', NA:NA'), '')
 
 numberOfUnfairWins <- nrow(unfairWins)
 
+
+
 #analysis of the victories
 
 resultsFinals <- results[, c("round", "tournamentStart", "win", "gamesWonSet1", "gamesLostSet1","gamesWonSet2", "gamesLostSet2", "gamesWonSet3", "gamesLostSet3", 
@@ -834,25 +834,32 @@ resultsFiltered$tournamentStart <- as.Date(resultsFiltered$tournamentStart)
 finals_win_percentage <- round(sum(resultsFiltered$win[resultsFiltered$round == "Finals"]) / sum(resultsFiltered$round == "Finals") * 100,2)
 
 # Create the line chart
-finalWin <- ggplot(resultsFiltered, aes(x = tournamentStart, y = cumulativeNbWins)) +
-  geom_line(color = "steelblue", size = 1.5) +
-  geom_point(data = subset(resultsFiltered, round == "Finals" & win == 0),
-             color = "black", size = 3, shape = 4) +
-  labs(x = "Tournament Start", y = "Cumulative Number of Wins",
-       title = "Cumulative Wins Over Time",
-       subtitle = paste0("Based on Finals and Win Status Finals Win Percentage: ", finals_win_percentage, "%")) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, hjust = 0.5),
-    plot.subtitle = element_text(size = 10, hjust = 0.5),
-    plot.caption = element_text(size = 10, color = "gray"),
-    axis.title = element_text(size = 10),
-    axis.text = element_text(size = 8), 
-    legend.title = element_blank(),
-    legend.text = element_text(size = 10),
-    plot.background = element_rect(colour = 'black'),
-    plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")
-  )
+finalWin <- if (nrow(resultsFiltered) == 0) {
+  print("The player has never played a final.")
+} else {
+  ggplot(resultsFiltered, aes(x = tournamentStart, y = cumulativeNbWins)) +
+    geom_line(color = "steelblue", size = 1.5) +
+    geom_point(data = subset(resultsFiltered, round == "Finals" & win == 0),
+               color = "black", size = 3, shape = 4) +
+    labs(x = "Tournament Start", y = "Cumulative Number of Wins",
+         title = "Cumulative Wins Over Time",
+         subtitle = paste0("Based on Finals and Win Status Finals Win Percentage: ", finals_win_percentage, "%")) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 14, hjust = 0.5),
+      plot.subtitle = element_text(size = 10, hjust = 0.5),
+      plot.caption = element_text(size = 10, color = "gray"),
+      axis.title = element_text(size = 10),
+      axis.text = element_text(size = 8), 
+      legend.title = element_blank(),
+      legend.text = element_text(size = 10),
+      plot.background = element_rect(colour = 'black'),
+      plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")
+    )
+}
+
+
+
 
 
 # 6. CREATE A REPORT ---------------------------------------------------------
