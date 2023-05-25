@@ -24,7 +24,13 @@ poundToUSDollar <- 1.2639 # 06.05.2023
 
 # Create functions
 beautifulPercentages <- function(x) {
-  output <- paste0(format(x * 100, digits = 2, nsmall = 2), '%')
+  output <- rep(NA, length(x))
+  
+  for(i in 1:length(x)) {
+    if(!is.na(x[i]) & !is.nan(x[i])) {
+      output[i] <- paste0(format(x[i] * 100, digits = 2, nsmall = 2), '%')
+    }
+  }
   
   return(output)
 }
@@ -35,8 +41,8 @@ View(players)
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Enter the player's name and birthday
-playerName <- 'Carlos Alcaraz' # !!!
-playerBirthday <- as.Date('2003-05-05') # !!!
+playerName <- 'Andre Agassi' # !!!
+playerBirthday <- as.Date('1970-04-29') # !!!
 
 # Extract the general information on the player
 overview <- filter(players, name == playerName & birthday == playerBirthday)
@@ -48,7 +54,7 @@ if(nrow(overview) != 1) {
 
 # 3. SCRAPE THE RESULTS OF THE PLAYER ----------------------------------------
 # Download the website
-website <- read_html(paste0('https://www.atptour.com', overview$link, 'player-activity?year=all'))
+website <- read_html(paste0('https://www.atptour.com', overview$link, 'player-activity?year=all&matchType=Singles'))
 
 # Extract all relevant information and put them into a new data frame
 results <- data.frame(matrix(nrow = 0, ncol = 16))
@@ -199,7 +205,19 @@ for(i in 1:nrow(results)) {
 remove(i, location)
 
 # date: Separate the date into the start and end and change the data type to date
-results <- separate(results, date, c('tournamentStart', 'tournamentEnd'), sep = '-')
+results$tournamentStart <- NA
+results$tournamentEnd <- NA
+
+for(i in 1:nrow(results)) {
+  if(grepl('-', results$date[i])) {
+    temp <- unlist(strsplit(results$date[i], '-', fixed = TRUE))
+  } else {
+    temp <- rep(results$date[i], 2)
+  }
+  
+  results$tournamentStart[i] <- temp[1]
+  results$tournamentEnd[i] <- temp[2]
+}
 
 for(col in c('tournamentStart', 'tournamentEnd')) {
   results[[col]] <- str_squish(results[[col]])
@@ -251,6 +269,9 @@ remove(currency, i, value)
 # round: Change the data type to factor
 results$round <- as.factor(results$round)
 
+# opponent: Correct some inconsistency in the raw data
+results$opponent[grepl('Bye', results$opponent, fixed = TRUE)] <- 'Bye'
+
 # opponentRank: Change the data type to numeric
 results$opponentRank[results$opponentRank == '-' & !is.na(results$opponentRank)] <- NA
 
@@ -277,6 +298,16 @@ results$walkover[!is.na(results$score)] <- 0
 results$walkover[results$score == '(W/O)' & !is.na(results$score)] <- 1
 
 results$score[results$score == '(W/O)' & !is.na(results$score)] <- NA
+
+# score: Create a dummy variable for (DEF) (default)
+results$default <- NA
+
+results$default[!is.na(results$score)] <- 0
+
+results$default[grepl('(DEF)', results$score, fixed = TRUE)] <- 1
+
+results$score <- gsub('(DEF)', '', results$score, fixed = TRUE)
+results$score <- trimws(results$score)
 
 # score: Create a dummy variable for (RET) (retirement)
 results$retirement <- NA
@@ -313,8 +344,9 @@ for(i in 1:nrow(results)) {
       if(grepl('-', results[[tolower(col)]][i], fixed = TRUE)) {
         results[[paste0('gamesWon', col)]][i] <- unlist(strsplit(results[[tolower(col)]][i], '-', fixed = TRUE))[1]
         results[[paste0('gamesLost', col)]][i] <- unlist(strsplit(results[[tolower(col)]][i], '-', fixed = TRUE))[2]
-      } else {
-        stop('There is a result pattern that we did not account for.')
+      } else { # In this unlikely case, we assume that the third number is wrong.
+        results[[paste0('gamesWon', col)]][i] <- substr(results[[tolower(col)]][i], 1, 1)
+        results[[paste0('gamesLost', col)]][i] <- substr(results[[tolower(col)]][i], 2, 2)
       }
     }
   }
@@ -375,7 +407,7 @@ remove(australienDollarToUSDollar, currency, euroToUSDollar, i, poundToUSDollar,
 results <- left_join(results, players, by = c('opponentLink' = 'link'))
 
 # Harmonise the countries
-results$country.x <- countryname(results$country.x, 'ioc')
+results$country.x <- countryname(results$country.x, 'ioc', warn = FALSE) # If some country name does not make sense, the function simply assigns NA.
 
 results$country.x <- as.factor(results$country.x)
 
@@ -386,8 +418,8 @@ results <- results %>%
          priceMoneyTotalUSDollar, rank, eventPoints, priceMoneyCurrency, priceMoneyValue,
          priceMoneyUSDollar, round, opponent, opponentRank, opponentLink,
          opponentCountry = country.y, opponentBirthday = birthday, opponentTurnedPro = turnedPro, opponentWeight = weight, opponentHeight = height,
-         opponentLefty = lefty, opponentOneHandedBackhand = oneHandedBackhand, win, walkover, retirement,
-         numberOfSets, starts_with('games'))
+         opponentLefty = lefty, opponentOneHandedBackhand = oneHandedBackhand, win, walkover, default,
+         retirement, numberOfSets, starts_with('games'))
 
 # 5. ANALYSE THE RESULTS OF THE PLAYER ---------------------------------------
 # Compute the total number of matches
@@ -462,11 +494,11 @@ for(i in 1:5) {
 
 for(i in 1:nrow(results)) {
   if(!is.na(results$win[i]) & results$walkover[i] == 0) {
-    if(results$retirement[i] == 0) {
+    if(results$default[i] == 0 & results$retirement[i] == 0) {
       for(j in 1:results$numberOfSets[i]) {
         results[i, paste0('set', j, 'Won')] <- as.numeric(results[i, paste0('gamesWonSet', j)] > results[i, paste0('gamesLostSet', j)])
       }
-    } else if(results$retirement[i] == 1) {
+    } else if(results$default[i] == 1 | results$retirement[i] == 1) {
       if(results$numberOfSets[i] > 1) {
         for(j in 1:(results$numberOfSets[i] - 1)) {
           results[i, paste0('set', j, 'Won')] <- as.numeric(results[i, paste0('gamesWonSet', j)] > results[i, paste0('gamesLostSet', j)])
@@ -591,6 +623,7 @@ plotRatio4 <- ggplot(time, aes(x = monthYear, y = winningPercentage, colour = sc
   geom_point(na.rm = TRUE) +
   geom_smooth(na.rm = TRUE, se = FALSE) +
   scale_colour_brewer(palette = 'Set1') +
+  ylim(0, 100) +
   labs(title = 'Percentage of Matches, Sets, and Games Won Over Time',
        x = NULL,
        y = 'Winning Percentage',
@@ -636,8 +669,6 @@ winningPercentageGrandSlams <- results %>%
   group_by(tournament) %>%
   summarise(winningPercentage = sum(win) / n())
 
-winningPercentageGrandSlams$winningPercentage <- beautifulPercentages(winningPercentageGrandSlams$winningPercentage)
-
 if(!all(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon') %in% winningPercentageGrandSlams$tournament)) {
   missingGrandSlams <- setdiff(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon'),
                                winningPercentageGrandSlams$tournament)
@@ -647,6 +678,8 @@ if(!all(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon') %in% winni
   
   remove(missingGrandSlams)
 }
+
+winningPercentageGrandSlams$winningPercentage <- beautifulPercentages(winningPercentageGrandSlams$winningPercentage)
 
 # Compute the total price money
 priceMoneyUSDollarTotal <- results %>%
@@ -731,7 +764,17 @@ temp <- results %>%
          opponentRank, opponentAge, opponentHeight, opponentLefty, opponentOneHandedBackhand,
          bestOfFive)
 
-lpm <- lm(win ~ ., temp)
+tryCatch(expr = {
+  lpm <- lm(win ~ ., temp)
+  
+  enoughSurfaces <- TRUE
+} , error = function(e) {
+  temp <- select(temp, -surface)
+  
+  lpm <<- lm(win ~ ., temp)
+  
+  enoughSurfaces <<- FALSE
+})
 
 remove(temp)
 
@@ -783,7 +826,7 @@ if(numberOfFinals > 0) {
   plotFinals <- ggplot(mapping = aes(x = tournamentEnd, y = cumSum)) +
     geom_line(data = finals, colour = 'blue') +
     geom_point(data = filter(finals, win == 0), colour = 'black', shape = 4, size = 3) +
-    labs(x = 'Date', 
+    labs(x = NULL,
          y = 'Cumulative Number of Tournament Wins',
          title = 'Tournament Wins',
          subtitle = paste('Winning Percentage in Finals:', winningPercentageFinals)) +
