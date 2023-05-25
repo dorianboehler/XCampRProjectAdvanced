@@ -16,9 +16,7 @@ library(scales)
 library(stringr)
 library(tidyverse)
 library(zoo)
-library(dplyr)
-library(ggplot2)
-library("tinytex")
+
 # Set fixed variables
 australienDollarToUSDollar <- 0.6761 # 06.05.2023
 euroToUSDollar <- 1.1210 # 06.05.2023
@@ -37,8 +35,8 @@ View(players)
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Enter the player's name and birthday
-playerName <- 'Dominic Thiem' # !!!
-playerBirthday <- as.Date('1993-09-03') # !!!
+playerName <- 'Carlos Alcaraz' # !!!
+playerBirthday <- as.Date('2003-05-05') # !!!
 
 # Extract the general information on the player
 overview <- filter(players, name == playerName & birthday == playerBirthday)
@@ -502,13 +500,11 @@ plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
        x = 'Set',
        y = NULL) +
   theme_minimal() +
-  theme(
-    plot.background = element_rect(colour = 'black'),
-    plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
-    plot.subtitle = element_text(size = 10, hjust = 0.5),
-    plot.margin = margin(1, 1, 1, 1, "cm"),
-    axis.title = element_text(size = 10)
-  )
+  theme(axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10),
+        plot.background = element_rect(colour = 'black'),
+        plot.margin = margin(1, 1, 1, 1, "cm"),
+        plot.title = element_text(size = 14, hjust = 0.5))
 
 remove(winningPercentageSets, i, j)
 
@@ -600,15 +596,12 @@ plotRatio4 <- ggplot(time, aes(x = monthYear, y = winningPercentage, colour = sc
        y = 'Winning Percentage',
        colour = 'Score Level') +
   theme_minimal() +
-  theme(
-    legend.position = 'top',
-    plot.background = element_rect(colour = 'black'),
-    plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
-    plot.subtitle = element_text(size = 10, hjust = 0.5),
-    plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
-    axis.title = element_text(size = 10)
-  )
-
+  theme(axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10),
+        legend.position = 'top',
+        plot.background = element_rect(colour = 'black'),
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+        plot.title = element_text(size = 14, hjust = 0.5))
 
 remove(gamesTime, matchesTime, setsTime, time, level)
 
@@ -636,16 +629,12 @@ for(i in c(1, 2)) {
 
 remove(temp, i, name)
 
-# Compute the match winning percentages at different tournaments
-winningPercentageTournaments <- results %>%
+# Compute the match winning percentages at the grand slams
+winningPercentageGrandSlams <- results %>%
   filter(opponent != 'Bye' & walkover == 0 &
-           tournamentType %in% c('ATP 250', 'ATP 500', 'ATP Masters 1000', 'Nitto ATP Finals', 'Grand Slam', 'ATP World Tour')) %>%
-  group_by(tournament, tournamentType) %>%
+           tournamentType == 'Grand Slam') %>%
+  group_by(tournament) %>%
   summarise(winningPercentage = sum(win) / n())
-
-winningPercentageGrandSlams <- winningPercentageTournaments %>%
-  filter(tournamentType == 'Grand Slam') %>%
-  select(tournament, winningPercentage)
 
 winningPercentageGrandSlams$winningPercentage <- beautifulPercentages(winningPercentageGrandSlams$winningPercentage)
 
@@ -655,17 +644,7 @@ if(!all(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon') %in% winni
   
   winningPercentageGrandSlams <- rbind(winningPercentageGrandSlams,
                                        data.frame(tournament = missingGrandSlams, winningPercentage = NA))
-}
-
-winningPercentageTournaments <- winningPercentageTournaments[
-  which(winningPercentageTournaments$winningPercentage == max(winningPercentageTournaments$winningPercentage)), ]
-
-winningPercentageTournaments$winningPercentage <- beautifulPercentages(winningPercentageTournaments$winningPercentage)
-winningPercentageTournaments <- paste0(
-  paste0(winningPercentageTournaments$tournament, ', ', winningPercentageTournaments$tournamentType, ' (', winningPercentageTournaments$winningPercentage, ')'),
-  collapse = '; ')
-
-if(exists('missingGrandSlams')) {
+  
   remove(missingGrandSlams)
 }
 
@@ -706,18 +685,15 @@ plotPriceMoneyUSDollarTotalYearly <- ggplot() +
   scale_x_continuous(breaks = seq(min(priceMoneyUSDollarTotalYearly$year), max(priceMoneyUSDollarTotalYearly$year), 3)) +
   scale_y_continuous(labels = comma_format(big.mark = '\'')) +
   labs(title = 'Total Price Money per Year',
-       x = '',
+       x = 'Year',
        y = 'Total Price Money (K$)') +
   theme_minimal() +
-  theme(
-    legend.position = 'none',
-    plot.background = element_rect(colour = 'black'),
-    plot.title = element_text(size = 14, hjust = 0.5, face = 'plain'),
-    plot.subtitle = element_text(size = 10, hjust = 0.5),
-    plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
-    axis.title = element_text(size = 10)
-  )
-
+  theme(axis.text = element_text(size = 8),
+        axis.title = element_text(size = 10),
+        legend.position = 'none',
+        plot.background = element_rect(colour = 'black'),
+        plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+        plot.title = element_text(size = 14, hjust = 0.5))
 
 remove(priceMoneyUSDollarTotalYearly, temp)
 
@@ -791,76 +767,38 @@ unfairWins$Result <- str_replace_all(unfairWins$Result, fixed(', NA:NA'), '')
 
 numberOfUnfairWins <- nrow(unfairWins)
 
+# Analyse the finals and tournament wins
+finals <- results %>%
+  select(tournamentEnd, round, win) %>%
+  filter(round == 'Finals') %>%
+  arrange(tournamentEnd)
 
+finals$cumSum <- cumsum(finals$win)
 
-#analysis of the victories
+numberOfFinals <- nrow(finals)
 
-resultsFinals <- results[, c("round", "tournamentStart", "win", "gamesWonSet1", "gamesLostSet1","gamesWonSet2", "gamesLostSet2", "gamesWonSet3", "gamesLostSet3", 
-                             "gamesWonSet4", "gamesLostSet4", "gamesWonSet5", "gamesLostSet5")]
-
-#keeping only the results which interests us 
-resultsFiltered <- resultsFinals %>% 
-  filter(round %in% c("Finals"))
-
-rm(resultsFinals)
-
-
-# Sort the dataset by "tournamentStart" in ascending order
-resultsFiltered <- resultsFiltered[order(resultsFiltered$tournamentStart), ]
-
-# Initialize the cumulative count variable
-cumulative_count <- 0
-
-# Create a new column and calculate the cumulative count
-resultsFiltered$cumulativeNbWins <- 0  # Initialize the column with 0
-
-for (i in 1:nrow(resultsFiltered)) {
-  if (resultsFiltered$round[i] == "Finals" && resultsFiltered$win[i] == 1) {
-    cumulative_count <- cumulative_count + 1
-  }
-  resultsFiltered$cumulativeNbWins[i] <- cumulative_count
-}
-
-
-# Convert tournamentStart to Date type if it's not already in Date format
-resultsFiltered$tournamentStart <- as.Date(resultsFiltered$tournamentStart)
-
-
-
-# Convert tournamentStart to Date type if it's not already in Date format
-resultsFiltered$tournamentStart <- as.Date(resultsFiltered$tournamentStart)
-
-# Calculate win percentage in finals
-finals_win_percentage <- round(sum(resultsFiltered$win[resultsFiltered$round == "Finals"]) / sum(resultsFiltered$round == "Finals") * 100,2)
-
-# Create the line chart
-finalWin <- if (nrow(resultsFiltered) == 0) {
-  print("The player has never played a final.")
-} else {
-  ggplot(resultsFiltered, aes(x = tournamentStart, y = cumulativeNbWins)) +
-    geom_line(color = "steelblue", size = 1.5) +
-    geom_point(data = subset(resultsFiltered, round == "Finals" & win == 0),
-               color = "black", size = 3, shape = 4) +
-    labs(x = "Tournament Start", y = "Cumulative Number of Wins",
-         title = "Cumulative Wins Over Time",
-         subtitle = paste0("Based on Finals and Win Status Finals Win Percentage: ", finals_win_percentage, "%")) +
+if(numberOfFinals > 0) {
+  winningPercentageFinals <- beautifulPercentages(mean(finals$win, na.rm = TRUE))
+  
+  plotFinals <- ggplot(mapping = aes(x = tournamentEnd, y = cumSum)) +
+    geom_line(data = finals, colour = 'blue') +
+    geom_point(data = filter(finals, win == 0), colour = 'black', shape = 4, size = 3) +
+    labs(x = 'Date', 
+         y = 'Cumulative Number of Tournament Wins',
+         title = 'Tournament Wins',
+         subtitle = paste('Winning Percentage in Finals:', winningPercentageFinals)) +
     theme_minimal() +
-    theme(
-      plot.title = element_text(size = 14, hjust = 0.5),
-      plot.subtitle = element_text(size = 10, hjust = 0.5),
-      plot.caption = element_text(size = 10, color = "gray"),
-      axis.title = element_text(size = 10),
-      axis.text = element_text(size = 8), 
-      legend.title = element_blank(),
-      legend.text = element_text(size = 10),
-      plot.background = element_rect(colour = 'black'),
-      plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm")
-    )
+    theme(axis.text = element_text(size = 8),
+          axis.title = element_text(size = 10),
+          plot.background = element_rect(colour = 'black'),
+          plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
+          plot.subtitle = element_text(size = 10, hjust = 0.5),
+          plot.title = element_text(size = 14, hjust = 0.5))
+  
+  remove(winningPercentageFinals)
 }
 
-
-
-
+remove(finals)
 
 # 6. CREATE A REPORT ---------------------------------------------------------
 # Define the name of the report
@@ -868,5 +806,3 @@ name <- paste0('report', gsub(' ', '', playerName, fixed = TRUE), gsub(' ', '', 
 
 # Finally create the report
 render('code/report.Rmd', output_format = 'pdf_document', output_file = paste0('../reports/', name, '.pdf'))
-
-

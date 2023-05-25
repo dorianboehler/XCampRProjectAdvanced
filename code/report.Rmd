@@ -2,35 +2,46 @@
 output: pdf_document
 ---
 
+\pagenumbering{gobble}
 
-\centerline{\LARGE University of St. Gallen}
+\begin{centering}
+ 
+\vspace*{1.5cm}
+
+\LARGE University of St.Gallen
+
 \vspace{0.5cm}
-\centerline{\Large School of Management, Economics, Law,}
-\centerline{\Large Social Sciences, International Affairs, and Computer Science}
 
-
+\Large School of Management, Economics, Law, Social Sciences, International Affairs and Computer Science
 
 \vspace{3cm}
 
-\centerline{\LARGE A Detailed Analysis of `r playerName`’s Results}
+\LARGE {\bf A Detailed Analysis of `r playerName`’s Results}
 
 \vspace{3cm}
 
-\centerline{\Large Noah Baiguini, Dorian Böhler}
-\vspace{0.5cm}
-\centerline{\large   (21-619-507), (15-613-433)}
+\LARGE Noah Baiguini, Dorian Böhler
 
-\vspace{3cm}
+\vspace{0.5cm}
 
-\centerline{\LARGE \today}
+\Large (21-619-507), (15-613-433)
+
+\vspace{1.5cm}
+
+\Large Skills: Programming
+
 \vspace{0.5cm}
-\centerline{\Large Skills: Programming}
-\vspace{0.5cm}
-\centerline{\Large Mr. Mario Silic}
+
+\Large PhD Mario Silic
+
+\end{centering}
+
 \newpage
 
-  
-  
+\pagenumbering{arabic}
+
+# Introduction
+
 ```{r, echo = FALSE, results = 'asis'}
 cat('This report is about **', playerName, '**, who is a tennis player from ', countrycode(overview$country, origin = 'ioc', destination = 'country.name'), '. He turned pro in ', overview$turnedPro, ' and is ', sep = '')
 if(overview$active == 1) {
@@ -65,26 +76,19 @@ if(overview$active == 0) {
 cat(' The highest ranking achieved is ', highestRank, '.', sep = '')
 ```
 
+\vspace{1cm}
 
 # Winning percentages
 Here are a few interesting match winning percentages:
 
-| Category                                | Winning Percentage |
-|-----------------------------------------|-------------------:|
-| Total                                   |           `r winningPercentage` |
-| Outdoor                                 |           `r winningPercentageOutdoor` |
-| Indoor                                  |           `r winningPercentageIndoor` |
-| Hard court                              |           `r winningPercentageHard` |
-| Clay court                              |           `r winningPercentageClay` |
-| Grass court                             |           `r winningPercentageGrass` |
-| Best of three                           |           `r winningPercentageBestOfThree` |
-| Best of five                            |           `r winningPercentageBestOfFive` |
-| Against players with a one-handed backhand |      `r winningPercentageOneHandedBackhand` |
-| Against players with a two-handed backhand |      `r winningPercentageTwoHandedBackhand` |
-| Against top 10 players                  |      `r winningPercentageTop10` |
-
-
-&nbsp;
+```{r, echo = FALSE, results = 'asis'}
+kable(data.frame(c('Total', 'Outdoor', 'Indoor', 'Hard court', 'Clay court',
+                   'Grass court', 'Best of three', 'Best of five', 'Against players with a one-handed backhand', 'Against players with a two-handed backhand',
+                   'Against top 10 players'),
+                 c(winningPercentage, winningPercentageOutdoor, winningPercentageIndoor, winningPercentageHard, winningPercentageClay, 
+                   winningPercentageGrass, winningPercentageBestOfThree, winningPercentageBestOfFive, winningPercentageOneHandedBackhand, winningPercentageTwoHandedBackhand,
+                   winningPercentageTop10)), col.names = c('Category', 'Winning Percentage'))
+```
 
 The following figure shows the number of first, second, third, fourth, and fifth sets played and won including the winning percentages:
 
@@ -94,7 +98,6 @@ The following figure shows the number of first, second, third, fourth, and fifth
 plotWinningPercentageSets
 ```
 
-&nbsp;
 \newpage
 
 In the following figure, you can see the winning percentages (matches, sets, and games) over time:
@@ -105,36 +108,43 @@ In the following figure, you can see the winning percentages (matches, sets, and
 plotRatio4
 ```
 
-&nbsp;
-
 \vspace{1cm}
 
 # Tournaments
-The tournament(s) with the best match winning percentage is (are): `r winningPercentageTournaments`.
-\vspace{1cm}
 The match winning percentages at Grand Slams are as follows:
 
 ```{r, echo = FALSE, results = 'asis'}
 kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Percentage'))
 ```
 
-&nbsp;
-\newpage
-In the following figure, you can see the accumulation of tournament won,but also the finals `r playerName` lost, the crosses:
 
-&nbsp;
 
-```{r, echo = FALSE, fig.height = 3}
-finalWin
+```{r, echo = FALSE, results = 'asis'}
+if(numberOfFinals > 0) {
+  cat('In the figure on the next page, you can see the cumulative number of tournament wins. Black crosses indicate finals that', playerName, 'lost.')
+} else {
+  if(overview$active == 1) {
+    cat(playerName, 'has not reached any final yet.')
+  } else {
+    cat(playerName, 'did never reach a final.')
+  }
+}
 ```
+
+&nbsp;
+
+```{r, echo = FALSE, fig.height = 3.5}
+plotFinals
+```
+
 &nbsp;
 
 # Price Money
-`r playerName`'s total price money is `r priceMoneyUSDollarTotal`.You can see how it developed over time.
+`r playerName`'s total price money is `r priceMoneyUSDollarTotal`. The following figure shows how it developed over time.
 
 &nbsp;
 
-```{r, echo = FALSE, fig.height = 3}
+```{r, echo = FALSE, fig.height = 3.5}
 plotPriceMoneyUSDollarTotalYearly
 ```
 
@@ -147,6 +157,7 @@ if(overview$active == 1) {
 ```
 
 \newpage
+
 # What affects the winning probability of `r playerName`?
 We have estimated the effect of some variables on the winning probability, using a linear probability model. The following table shows the results:
 
