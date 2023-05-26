@@ -34,7 +34,7 @@ for(i in 1:(numberOfDates - 1)) {
   
 remove(website, i, numberOfDates)
 
-# Extract the year
+# Extract the year from the dates
 dates$year <- substr(dates$date, 1, 4)
 
 # Keep only the latest date per year
@@ -49,7 +49,7 @@ dates <- dates %>%
 
 # We are now ready to download the year-end rankings.
 
-# Create the links
+# Create the links (one for every year)
 dates$link <- paste0('https://www.atptour.com/en/rankings/singles?rankRange=1-5000&rankDate=', dates$date)
 
 # Loop through the links and save the names and links of the players (takes about 35 minutes)
@@ -90,7 +90,7 @@ players <- distinct(players)
 # Remove the unknown players
 players <- filter(players, name != 'Unknown Unknown')
 
-# Remove the last part of the links so that we can use them generally
+# Remove the last part of the links so that we can use them generally (we do not always want to access the overview page)
 players$link <- substr(players$link, 1, nchar(players$link) - 8)
 
 # Remove the quotation marks from the links (as they do not work otherwise)
@@ -99,15 +99,14 @@ players$link <- gsub('"', '', players$link, fixed = TRUE)
 # Remove certain dots from the links (as they do not work otherwise)
 players$link <- gsub('./', '/', players$link, fixed = TRUE)
 
-# Since there are some players with the same name, 
-# we need additional information on the players in order to uniquely identify them later.
-# Besides, this information will be interesting in the analysis later.
+# Let us scrape some additional information on the players. 
+# This will be interesting in the analysis later.
 
 # Create an empty csv file to which we will append the rows one by one (this is more efficient)
 file.create('data/players.csv')
 file <- file('data/players.csv')
 
-writeLines('name\tlink\tactive\tcountry\tbirthday\tturnedPro\tweight\theight\tlefty\toneHandedBackhand', file)
+writeLines('name\tlink\tactive\tcountry\tbirthday\tturnedPro\tweight\theight\tlefty\toneHandedBackhand', file) # We define the column names here.
 
 close(file)
 
@@ -123,7 +122,7 @@ for(i in 1:nrow(players)) {
     # Download the website
     website <- read_html(paste0('https://www.atptour.com', players$link[i], 'overview'))
     
-    # Extract the information
+    # Extract the information (mainly using xpaths and regular expressions)
     active <- !is.na(str_extract(html_elements(website, xpath = '//*[@id="playerProfileHero"]/div[2]/div[1]/div/div[3]/div[1]/div[2]') %>%
                                    html_text(),
                                  '[:digit:]+'))
@@ -167,11 +166,12 @@ for(i in 1:nrow(players)) {
     # Display the progress
     print(paste('Player', i, 'out of', nrow(players), 'done.'))
   }, error = function(e) {
+    # If there is an error, save it in the data frame
     temp <- data.frame(name = players$name[i],
                        link = players$link[i],
                        error = as.character(e))
     
-    errors <<- rbind(errors, temp) # Be careful with super assignments!
+    errors <<- rbind(errors, temp) # SUPER ASSIGNMENT!
     
     # Display the error in red
     print_colour(paste('Error:', as.character(e)), 'red')
@@ -192,7 +192,7 @@ for(i in 1:nrow(tryAgain)) {
     # Download the website
     website <- read_html(paste0('https://www.atptour.com', tryAgain$link[i], 'overview'))
     
-    # Extract the information
+    # Extract the information (mainly using xpaths and regular expressions)
     active <- !is.na(str_extract(html_elements(website, xpath = '//*[@id="playerProfileHero"]/div[2]/div[1]/div/div[3]/div[1]/div[2]') %>%
                                    html_text(),
                                  '[:digit:]+'))
@@ -233,11 +233,12 @@ for(i in 1:nrow(tryAgain)) {
     
     write.table(temp, file = 'data/players.csv', append = TRUE, sep = '\t', row.names = FALSE, col.names = FALSE, fileEncoding = 'UTF-8')
   }, error = function(e) {
+    # If there is an error, save it in the data frame
     temp <- data.frame(name = tryAgain$name[i],
                        link = tryAgain$link[i],
                        error = as.character(e))
     
-    errors <<- rbind(errors, temp) # Again, be careful with super assignments!
+    errors <<- rbind(errors, temp) # SUPER ASSIGNMENT!
   })
 } # Again, we can ignore the warning messages. They are in the errors.
 
@@ -280,7 +281,7 @@ players$weight <- as.numeric(substr(players$weight, 1, nchar(players$weight) - 2
 players$height <- as.numeric(substr(players$height, 1, nchar(players$height) - 2))
 
 # lefty: Create a dummy variable
-players$lefty[players$lefty == 'Ambidextrous' & !is.na(players$lefty)] <- NA
+players$lefty[players$lefty == 'Ambidextrous' & !is.na(players$lefty)] <- NA # There are so few ambidextrous players that we ignore this information.
 
 players$lefty[players$lefty == 'Right-Handed' & !is.na(players$lefty)] <- 0
 
