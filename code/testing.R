@@ -32,7 +32,7 @@ playersSample$error <- NA
 
 # 3. TEST THE CODE --------------------------------------------------------
 # Go through the sample players one-by-one
-for(testingPlayer in 1:5) {
+for(testingPlayer in 1:sampleSize) {
   tryCatch(expr = {
     # Extract the player's link
     playerLink <- playersSample$link[testingPlayer]
