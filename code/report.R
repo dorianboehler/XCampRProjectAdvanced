@@ -23,7 +23,7 @@ euroToUSDollar <- 1.1210 # 06.05.2023
 poundToUSDollar <- 1.2639 # 06.05.2023
 
 # Create functions
-beautifulPercentages <- function(x) {
+beautifulPercentages <- function(x) { # This function makes percentages look good for the report.
   output <- rep(NA, length(x))
   
   for(i in 1:length(x)) {
@@ -37,24 +37,23 @@ beautifulPercentages <- function(x) {
 
 # Import the cleaned list of players
 load('data/playersCleaned.RData')
-View(players)
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
-# Copy and paste the player's link
-playerLink <- '/en/players/cyril-vandermeersch/v0bc/' # !!!
+# Copy and paste the link of the player of interest (see players)
+playerLink <- '/en/players/carlos-alcaraz/a0e2/' # !!!
 
 # Extract the general information on the player
 overview <- filter(players, link == playerLink)
 
 remove(playerLink)
 
-# Extract the player's name for later
-playerName <- overview$name
-
 # Check whether the player actually exists in the list
 if(nrow(overview) != 1) {
   stop('The player does not exist in the list. Please make sure that you entered the link correctly.')
 }
+
+# Extract the player's name
+playerName <- overview$name
 
 # 3. SCRAPE THE RESULTS OF THE PLAYER ----------------------------------------
 # Download the website
@@ -67,16 +66,17 @@ colnames(results) <- c('tournamentType', 'tournament', 'location', 'date', 'outd
                        'opponentLink', 'win', 'score', 'eventPoints', 'rank',
                        'priceMoney')
 
-numberOfTournaments <- length(html_elements(website, xpath = '//*[@id="currentTabContent"]/div[3]/div'))
+numberOfTournaments <- length(html_elements(website, xpath = '//*[@id="currentTabContent"]/div[3]/div')) # Compute the number of tournaments. Due to the structure of the website, we need to go through every tournament one-by-one.
 
 if(numberOfTournaments == 0) { # If the player has actually never played, do not continue.
   stop('This player has actually never played a match.')
 }
 
 for(i in 1:numberOfTournaments) {
+  # Tournament type
   tournamentType <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[1]/img')) %>%
     html_attr('alt')
-  if(tournamentType == "") {
+  if(tournamentType == "") { # Some tournament types do not have an attribute alt so that we need to extract the information differently. 
     tournamentType <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[1]/img')) %>%
       html_attr('src')
     
@@ -85,9 +85,10 @@ for(i in 1:numberOfTournaments) {
     } else if(grepl('itf', tournamentType, fixed = TRUE)) {
       tournamentType <- 'ITF'
     }
-  } # Some tournament types do not have an attribute alt so that we need to extract the information differently.
+  }
   
-  if(length(html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[2]/a'))) > 0) {
+  # Tournament, location, and date
+  if(length(html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[2]/a'))) > 0) { # There are two different xpaths to the tournament, location, and date.
     tournament <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[2]/a')) %>%
       html_text()
     tournament <- str_squish(gsub('\\r\\n', '', tournament))
@@ -113,8 +114,9 @@ for(i in 1:numberOfTournaments) {
     date <- str_squish(gsub('\\r\\n', '', date))
   } else {
     stop('Something unexpected happened')
-  } # There are two different xpaths to the tournament, location, and date.
+  }
   
+  # Outdoor and surface
   temp <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[3]/table/tbody/tr/td[2]/div[2]/div')) %>%
     html_text()
   temp <- str_squish(gsub('\\r\\n', '', temp))
@@ -122,10 +124,12 @@ for(i in 1:numberOfTournaments) {
   
   surface <- substr(temp, 3, nchar(temp))
   
+  # Total price money 
   priceMoneyTotal <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[1]/tbody/tr/td[3]/table/tbody/tr/td[3]/div[2]/div/span')) %>%
     html_text()
   priceMoneyTotal <- str_squish(gsub('\\r\\n', '', priceMoneyTotal))
   
+  # Round, opponent, win, and score
   temp <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/table[2]/tbody')) %>%
     html_table()
   temp <- as.data.frame(temp)
@@ -146,6 +150,7 @@ for(i in 1:numberOfTournaments) {
     opponentLink <- substr(opponentLink, 1, nchar(opponentLink) - 8)
     opponentLink <- append(opponentLink, rep(NA, sum(opponent == 'Bye')))
     
+    # Event points, rank, and price money
     temp <- html_elements(website, xpath = paste0('//*[@id="currentTabContent"]/div[3]/div[', i, ']/div')) %>%
       html_text()
     
@@ -155,6 +160,7 @@ for(i in 1:numberOfTournaments) {
     
     priceMoney <- str_extract(temp, '(?<=Prize Money: ).*')
     
+    # Add the row to the results
     temp <- data.frame(tournamentType = tournamentType,
                        tournament = tournament,
                        location = location,
@@ -170,7 +176,7 @@ for(i in 1:numberOfTournaments) {
                        score = score,
                        eventPoints = eventPoints,
                        rank = rank,
-                       priceMoney)
+                       priceMoney = priceMoney)
     
     results <- rbind(results, temp)
   }
@@ -179,7 +185,7 @@ for(i in 1:numberOfTournaments) {
   print(paste('Tournament', i, 'out of', numberOfTournaments, 'done.'))
 }
 
-if(nrow(results) == 0) { # If the player has actually never played, do not continue.
+if(nrow(results) == 0) { # If the player has actually never played, do not continue (there are some players with >0 tournaments but 0 matches).
   stop('This player has actually never played a match.')
 }
 
@@ -202,11 +208,11 @@ results$country <- NA
 for(i in 1:nrow(results)) {
   location <- results$location[i]
   
-  if(grepl(',', location, fixed = TRUE)) {
-    results$city[i] <- str_extract(location, '.*?(?=,)')
+  if(grepl(',', location, fixed = TRUE)) { # If the location consists of city and country, do this.
+    results$city[i] <- str_extract(location, '.*?(?=,)') # We cannot simply split them at the comma because some locations include multiple commas.
     results$country[i] <- gsub('.*, ', '', location)
-  } else {
-    if(is.na(countryname(location, warn = FALSE))) {
+  } else { # If the location does not consist of city and country, do this.
+    if(is.na(countryname(location, warn = FALSE))) { # Check whether the location is a city or country.
       results$city[i] <- location
     } else {
       results$country[i] <- location
@@ -221,9 +227,9 @@ results$tournamentStart <- NA
 results$tournamentEnd <- NA
 
 for(i in 1:nrow(results)) {
-  if(grepl('-', results$date[i])) {
+  if(grepl('-', results$date[i])) { # If the date consists of two dates, split them (usually the case).
     temp <- unlist(strsplit(results$date[i], '-', fixed = TRUE))
-  } else {
+  } else { # If the date consists of only one date, use it as the start and end (rarely the case, does not really matter for the analysis).
     temp <- rep(results$date[i], 2)
   }
   
@@ -246,13 +252,14 @@ results$outdoor <- ifelse(results$outdoor == 'O', 1, 0)
 results$surface <- as.factor(results$surface)
 
 # priceMoneyTotal: Separate the total price money into the currency and value and change the data type to factor and numeric, respectively
-results$priceMoneyTotal <- gsub(',', '', results$priceMoneyTotal, fixed = TRUE)
+results$priceMoneyTotal <- gsub(',', '', results$priceMoneyTotal, fixed = TRUE) # Remove commas.
 
-results$priceMoneyTotalValue <- str_extract(results$priceMoneyTotal, '[:digit:]+')
+results$priceMoneyTotalValue <- str_extract(results$priceMoneyTotal, '[:digit:]+') # Value.
 results$priceMoneyTotalValue <- as.numeric(results$priceMoneyTotalValue)
 
-results$priceMoneyTotalCurrency <- str_extract(results$priceMoneyTotal, '.*?(?=[:digit:])')
-results[results$priceMoneyTotalCurrency == '', c('priceMoneyTotalValue', 'priceMoneyTotalCurrency')] <- NA
+results$priceMoneyTotalCurrency <- str_extract(results$priceMoneyTotal, '.*?(?=[:digit:])') # Currency.
+results[results$priceMoneyTotalCurrency == '' & !is.na(results$priceMoneyTotalCurrency), 
+        c('priceMoneyTotalValue', 'priceMoneyTotalCurrency')] <- NA # If there is no currency, set the total price money to NA (very rarely the case).
 results$priceMoneyTotalCurrency <- as.factor(results$priceMoneyTotalCurrency)
 
 # priceMoneyTotal: Convert the total price money into US dollar
@@ -262,13 +269,13 @@ for(i in 1:nrow(results)) {
   currency <- results$priceMoneyTotalCurrency[i]
   value <- results$priceMoneyTotalValue[i]
   
-  if(currency == 'A$' & !is.na(currency)) {
+  if(currency == 'A$' & !is.na(currency)) { # Australian Dollar.
     results$priceMoneyTotalUSDollar[i] <- value * australienDollarToUSDollar
-  } else if(currency == '€' & !is.na(currency)) {
+  } else if(currency == '€' & !is.na(currency)) { # Euro.
     results$priceMoneyTotalUSDollar[i] <- value * euroToUSDollar
-  } else if(currency == '£' & !is.na(currency)) {
+  } else if(currency == '£' & !is.na(currency)) { # Pound.
     results$priceMoneyTotalUSDollar[i] <- value * poundToUSDollar
-  } else if(currency == '$' & !is.na(currency)) {
+  } else if(currency == '$' & !is.na(currency)) { # US Dollar.
     results$priceMoneyTotalUSDollar[i] <- value
   } else {
     if(!is.na(currency)) {
@@ -285,7 +292,7 @@ results$round <- as.factor(results$round)
 # opponent: Correct some inconsistency in the raw data
 results$opponent[grepl('Bye', results$opponent, fixed = TRUE)] <- 'Bye'
 
-# opponentRank: Change the data type to numeric
+# opponentRank: Set - to NA and change the data type to numeric
 results$opponentRank[results$opponentRank == '-' & !is.na(results$opponentRank)] <- NA
 
 results$opponentRank <- as.numeric(results$opponentRank)
@@ -295,7 +302,7 @@ results$opponentLink <- gsub('"', '', results$opponentLink, fixed = TRUE)
 
 results$opponentLink <- gsub('./', '/', results$opponentLink, fixed = TRUE)
 
-# win: Create a dummy variable
+# win: Replace empty strings with NA and create a dummy variable
 results$win[results$win == '' & !is.na(results$win)] <- NA
 
 results$win <- ifelse(results$win == 'W', 1, 0)
@@ -303,7 +310,7 @@ results$win <- ifelse(results$win == 'W', 1, 0)
 # score: Replace empty strings with NA
 results$score[results$score == '' & !is.na(results$score)] <- NA
 
-# score: Create a dummy variable for (W/O) (walkover)
+# score: Create a dummy variable for (W/O) and set the score to NA (walkover)
 results$walkover <- NA
 
 results$walkover[!is.na(results$score)] <- 0
@@ -312,7 +319,7 @@ results$walkover[results$score == '(W/O)' & !is.na(results$score)] <- 1
 
 results$score[results$score == '(W/O)' & !is.na(results$score)] <- NA
 
-# score: Create a dummy variable for (DEF) (default)
+# score: Create a dummy variable for (DEF) (default) and remove (DEF) from the score
 results$default <- NA
 
 results$default[!is.na(results$score)] <- 0
@@ -322,7 +329,7 @@ results$default[grepl('(DEF)', results$score, fixed = TRUE)] <- 1
 results$score <- gsub('(DEF)', '', results$score, fixed = TRUE)
 results$score <- trimws(results$score)
 
-# score: Create a dummy variable for (RET) (retirement)
+# score: Create a dummy variable for (RET) (retirement) and remove (RET) from the score
 results$retirement <- NA
 
 results$retirement[!is.na(results$score)] <- 0
@@ -332,8 +339,8 @@ results$retirement[grepl('(RET)', results$score, fixed = TRUE)] <- 1
 results$score <- gsub('(RET)', '', results$score, fixed = TRUE)
 results$score <- trimws(results$score)
 
-# score: Create a column for every set
-results$score[grepl('-[0-9]{3,}?', results$score)] <- gsub('(-[0-9]{1,2})([0-9]{2})', '\\1 \\2', results$score[grepl('-[0-9]{3,}?', results$score)])
+# score: Create a column for every set (sets are separated by white spaces)
+results$score[grepl('-[0-9]{3,}?', results$score)] <- gsub('(-[0-9]{1,2})([0-9]{2})', '\\1 \\2', results$score[grepl('-[0-9]{3,}?', results$score)]) # Very rarely, sets are not separated by white spaces, which we correct here.
 
 results <- separate(results, score, c('set1', 'set2', 'set3', 'set4', 'set5'), sep = ' ', fill = 'right')
 
@@ -344,7 +351,7 @@ for(col in c('set1', 'set2', 'set3', 'set4', 'set5')) {
 
 remove(col)
 
-# score: Separate the score into the player's and opponent's number of games and change the data type to numeric
+# score: Separate the score of every set into the player's and opponent's number of games and change the data type to numeric
 for(col in c('Set1', 'Set2', 'Set3', 'Set4', 'Set5')) {
   results[[paste0('gamesWon', col)]] <- NA
   results[[paste0('gamesLost', col)]] <- NA
@@ -352,14 +359,14 @@ for(col in c('Set1', 'Set2', 'Set3', 'Set4', 'Set5')) {
 
 for(i in 1:nrow(results)) {
   for(col in c('Set1', 'Set2', 'Set3', 'Set4', 'Set5')) {
-    if(nchar(results[[tolower(col)]][i]) == 2 & !is.na(results[[tolower(col)]][i])) {
+    if(nchar(results[[tolower(col)]][i]) == 2 & !is.na(results[[tolower(col)]][i])) { # If the score consists of two numbers, the first belongs to the player and the second to the opponent.
       results[[paste0('gamesWon', col)]][i] <- substr(results[[tolower(col)]][i], 1, 1)
       results[[paste0('gamesLost', col)]][i] <- substr(results[[tolower(col)]][i], 2, 2)
     } else if(!is.na(results[[tolower(col)]][i])) {
-      if(grepl('-', results[[tolower(col)]][i], fixed = TRUE)) {
+      if(grepl('-', results[[tolower(col)]][i], fixed = TRUE)) { # If the score consists of more than two numbers, they are usually separated by a hyphen.
         results[[paste0('gamesWon', col)]][i] <- unlist(strsplit(results[[tolower(col)]][i], '-', fixed = TRUE))[1]
         results[[paste0('gamesLost', col)]][i] <- unlist(strsplit(results[[tolower(col)]][i], '-', fixed = TRUE))[2]
-      } else { # In this unlikely case, we assume that the third number is wrong.
+      } else { # Very rarely, a third number is mistakenly added to the score, which we simply ignore.
         results[[paste0('gamesWon', col)]][i] <- substr(results[[tolower(col)]][i], 1, 1)
         results[[paste0('gamesLost', col)]][i] <- substr(results[[tolower(col)]][i], 2, 2)
       }
@@ -379,7 +386,7 @@ results$numberOfSets <- rowSums(!is.na(results[, c('set1', 'set2', 'set3', 'set4
 
 results$numberOfSets[results$numberOfSets == 0] <- NA
 
-# eventPoints: Change 0 to NA under certain conditions
+# eventPoints: Replace 0 with NA if the player won at least one match at a tournament
 results <- results %>%
   group_by(tournament, date) %>%
   mutate(firstRoundLost = if_else(sum(win, na.rm = TRUE) > 0, 0, 1)) %>%
@@ -390,23 +397,24 @@ results$eventPoints[results$eventPoints == '0' & results$firstRoundLost == 0] <-
 # eventPoints: Change the data type to numeric
 results$eventPoints <- as.numeric(results$eventPoints)
 
-# rank: Change 0 to NA
+# rank: Replace 0 with NA
 results$rank[results$rank == '0'] <- NA
 
 # rank: Change the data type to numeric
 results$rank <- as.numeric(results$rank)
 
-# priceMoney: Change 0 to NA under certain conditions
+# priceMoney: Replace 0 with NA if the player won at least one match at a tournament
 results$priceMoney[results$priceMoney == '$0' & results$firstRoundLost == 0] <- NA
 
 # priceMoney: Separate the price money into the currency and value and change the data type to factor and numeric, respectively
-results$priceMoney <- gsub(',', '', results$priceMoney, fixed = TRUE)
+results$priceMoney <- gsub(',', '', results$priceMoney, fixed = TRUE) # Remove commas.
 
-results$priceMoneyValue <- str_extract(results$priceMoney, '[:digit:]+')
+results$priceMoneyValue <- str_extract(results$priceMoney, '[:digit:]+') # Value.
 results$priceMoneyValue <- as.numeric(results$priceMoneyValue)
 
-results$priceMoneyCurrency <- str_extract(results$priceMoney, '.*?(?=[:digit:])')
-results[results$priceMoneyCurrency == '', c('priceMoneyValue', 'priceMoneyCurrency')] <- NA
+results$priceMoneyCurrency <- str_extract(results$priceMoney, '.*?(?=[:digit:])') # Currency.
+results[results$priceMoneyCurrency == '' & !is.na(results$priceMoneyCurrency), 
+        c('priceMoneyValue', 'priceMoneyCurrency')] <- NA # If there is no currency, set the price money to NA (very rarely the case).
 results$priceMoneyCurrency <- as.factor(results$priceMoneyCurrency)
 
 # priceMoney: Convert the price money into US dollar
@@ -416,13 +424,13 @@ for(i in 1:nrow(results)) {
   currency <- results$priceMoneyCurrency[i]
   value <- results$priceMoneyValue[i]
   
-  if(currency == 'A$' & !is.na(currency)) {
+  if(currency == 'A$' & !is.na(currency)) { # Australian Dollar.
     results$priceMoneyUSDollar[i] <- value * australienDollarToUSDollar
-  } else if(currency == '€' & !is.na(currency)) {
+  } else if(currency == '€' & !is.na(currency)) { # Euro.
     results$priceMoneyUSDollar[i] <- value * euroToUSDollar
-  } else if(currency == '£' & !is.na(currency)) {
+  } else if(currency == '£' & !is.na(currency)) { # Pound.
     results$priceMoneyUSDollar[i] <- value * poundToUSDollar
-  } else if(currency == '$' & !is.na(currency)) {
+  } else if(currency == '$' & !is.na(currency)) { # US Dollar.
     results$priceMoneyUSDollar[i] <- value
   } else {
     if(!is.na(currency)) {
@@ -454,12 +462,12 @@ results <- results %>%
 # 5. ANALYSE THE RESULTS OF THE PLAYER ---------------------------------------
 # Compute the total number of matches
 numberOfMatches <- results %>%
-  filter(opponent != 'Bye' & walkover == 0) %>%
+  filter(opponent != 'Bye' & walkover == 0) %>% # Do not include byes and walkovers.
   summarise(n()) %>%
   pull(1)
 
 # Compute the highest rank achieved
-if(!all(is.na(results$rank))) {
+if(!all(is.na(results$rank))) { # Rarely, there are only missing values.
   highestRank <- min(results$rank, na.rm = TRUE)
 } else {
   highestRank <- NA
@@ -526,25 +534,25 @@ winningPercentageTop10 <- results %>%
 winningPercentageTop10 <- beautifulPercentages(winningPercentageTop10)
 
 # Compute the winning percentage of first, second, third, fourth, and fifth sets
-for(i in 1:5) {
+for(i in 1:5) { # For every set, create a column indicating the winner.
   results[[paste0('set', i, 'Won')]] <- NA
 }
 
-for(i in 1:nrow(results)) {
-  if(!is.na(results$win[i]) & !is.na(results$walkover[i]) & results$walkover[i] == 0) {
-    if(results$default[i] == 0 & results$retirement[i] == 0) {
-      for(j in 1:results$numberOfSets[i]) {
+for(i in 1:nrow(results)) { # For every set, find the winner.
+  if(!is.na(results$win[i]) & !is.na(results$walkover[i]) & results$walkover[i] == 0) { # If the players did not play the match, do not do this.
+    if(results$default[i] == 0 & results$retirement[i] == 0) { # If the players did not default or retire, every set is a complete set.
+      for(j in 1:results$numberOfSets[i]) { # For every complete set, check who won more games.
         results[i, paste0('set', j, 'Won')] <- as.numeric(results[i, paste0('gamesWonSet', j)] > results[i, paste0('gamesLostSet', j)])
       }
-    } else if(results$default[i] == 1 | results$retirement[i] == 1) {
-      if(results$numberOfSets[i] > 1) {
-        for(j in 1:(results$numberOfSets[i] - 1)) {
+    } else if(results$default[i] == 1 | results$retirement[i] == 1) { # If a player defaulted or retired, the last set may not be complete.
+      if(results$numberOfSets[i] > 1) { # If they played multiple sets, they completed the first n - 1 sets for sure.
+        for(j in 1:(results$numberOfSets[i] - 1)) { # For every complete set, check who won more games.
           results[i, paste0('set', j, 'Won')] <- as.numeric(results[i, paste0('gamesWonSet', j)] > results[i, paste0('gamesLostSet', j)])
         }
       }
       
       if(results[i, paste0('gamesWonSet', results$numberOfSets[i])] %in% c(6, 7) |
-         results[i, paste0('gamesLostSet', results$numberOfSets[i])] %in% c(6, 7)) {
+         results[i, paste0('gamesLostSet', results$numberOfSets[i])] %in% c(6, 7)) { # Check whether the last set of a match in which a player defaulted or retired is complete. If so, check who won more games.
         results[i, paste0('set', results$numberOfSets[i], 'Won')] <- as.numeric(results[i, paste0('gamesWonSet', results$numberOfSets[i])] > results[i, paste0('gamesLostSet', results$numberOfSets[i])])
       }
     } else {
@@ -553,19 +561,19 @@ for(i in 1:nrow(results)) {
   }
 }
 
-winningPercentageSets <- results %>%
-  select('1' = set1Won, '2' = set2Won, '3' = set3Won, '4' = set4Won, '5' = set5Won) %>%
+winningPercentageSets <- results %>% # Compute the set winning percentages.
+  select('1' = set1Won, '2' = set2Won, '3' = set3Won, '4' = set4Won, '5' = set5Won) %>% # Change the labels of the plot.
   gather(key = 'set', value = 'won') %>%
-  filter(!is.na(won)) %>%
+  filter(!is.na(won)) %>% # Many sets were not played because some player already won.
   group_by(set) %>%
   summarise(numberOfSetsPlayed = n(),
             numberOfSetsWon = sum(won),
             winningPercentage = beautifulPercentages(sum(won) / n()))
 
-plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
+plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) + # Create a bar plot.
   geom_bar(aes(y = numberOfSetsPlayed), stat = 'identity', fill = 'grey') +
   geom_bar(aes(y = numberOfSetsWon), stat = 'identity', fill = 'darkgreen') +
-  geom_text(aes(y = 0, label = winningPercentage), vjust = -4.5) +
+  geom_text(aes(y = 0, label = winningPercentage), vjust = -4.5) + # Add the set winning percentages to the plot.
   labs(title = 'Number of Sets Played and Won',
        x = 'Set',
        y = NULL) +
@@ -578,31 +586,35 @@ plotWinningPercentageSets <- ggplot(winningPercentageSets, aes(x = set)) +
 
 remove(winningPercentageSets, i, j)
 
-# Assign a month and year to every match, using the starting and ending date of the tournament
+# Assign a month and year to every match, using the starting and ending date of the tournament:
+# If the starting and ending date are in the same month, use either.
+# If the starting and ending date are not in the same month, compare the number of days in the former and latter month 
+# (e.g. if a tournament started on 2023-03-27 (5 days in March) and ended on 2023-04-02 (2 days in April), we use March 2023).
 results$monthYear <- as.yearmon(results$tournamentStart)
 results$monthYear[ceiling_date(results$tournamentStart, unit = 'month') - results$tournamentStart <
                     results$tournamentEnd - floor_date(results$tournamentEnd, unit = 'month')] <- as.yearmon(results$tournamentEnd[ceiling_date(results$tournamentStart, unit = 'month') - results$tournamentStart <
                                                                                                                                      results$tournamentEnd - floor_date(results$tournamentEnd, unit = 'month')])
-# Compute how the ratio between the number of wins and matches changed over time
+# Compute how the match winning percentage changed over time
 matchesTime <- results %>%
   filter(opponent != 'Bye' & walkover == 0) %>%
   group_by(monthYear) %>%
   summarise(matches = n(),
             wins = sum(win))
 
-monthYear <- as.yearmon(seq(as.Date(matchesTime$monthYear[1]), as.Date(matchesTime$monthYear[nrow(matchesTime)]), by = 'month'))
-matchesTime <- left_join(tibble(monthYear), matchesTime, by = 'monthYear')
+monthYear <- as.yearmon(seq(as.Date(matchesTime$monthYear[1]), as.Date(matchesTime$monthYear[nrow(matchesTime)]), by = 'month')) # Create a sequence of months from the very first to the very last tournament of the player.
+
+matchesTime <- left_join(tibble(monthYear), matchesTime, by = 'monthYear') # Fill in the months in which the player did not play any match.
 matchesTime$matches[is.na(matchesTime$matches)] <- 0
 matchesTime$wins[is.na(matchesTime$wins)] <- 0
 
-matchesTime <- matchesTime %>%
+matchesTime <- matchesTime %>% # Compute a rolling match winning percentage (rolling window = 4 months).
   mutate(matchesSum4 = rollsum(matches, k = 4, fill = NA, align = 'right'),
          winsSum4 = rollsum(wins, k = 4, fill = NA, align = 'right'),
          ratio4Matches = if_else(matchesSum4 > 0, winsSum4 / matchesSum4 * 100, NA))
 
-# Compute how the ratio between the number of sets won and played changed over time
-results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, 'setsWon'] <- rowSums(results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, paste0(rep('set', 5), 1:5, rep('Won', 5))], na.rm = TRUE)
-results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, 'setsLost'] <- rowSums(results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, paste0(rep('set', 5), 1:5, rep('Won', 5))] - 1, na.rm = TRUE) * -1
+# Compute how the set winning percentage changed over time
+results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, 'setsWon'] <- rowSums(results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, paste0(rep('set', 5), 1:5, rep('Won', 5))], na.rm = TRUE) # Compute the number of sets won in a match.
+results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, 'setsLost'] <- rowSums(results[results$opponent != 'Bye' & !is.na(results$walkover) & results$walkover == 0, paste0(rep('set', 5), 1:5, rep('Won', 5))] - 1, na.rm = TRUE) * -1 # Compute the number of sets lost in a match.
 
 setsTime <- results %>%
   filter(opponent != 'Bye' & walkover == 0) %>%
@@ -610,20 +622,20 @@ setsTime <- results %>%
   summarise(setsPlayed = sum(setsWon + setsLost),
             setsWon = sum(setsWon))
 
-setsTime <- left_join(tibble(monthYear), setsTime, by = 'monthYear')
+setsTime <- left_join(tibble(monthYear), setsTime, by = 'monthYear') # Fill in the months in which the player did not play any match.
 setsTime$setsPlayed[is.na(setsTime$setsPlayed)] <- 0
 setsTime$setsWon[is.na(setsTime$setsWon)] <- 0
 
-setsTime <- setsTime %>%
+setsTime <- setsTime %>% # Compute a rolling set winning percentage (rolling window = 4 months).
   mutate(setsPlayedSum4 = rollsum(setsPlayed, k = 4, fill = NA, align = 'right'),
          setsWonSum4 = rollsum(setsWon, k = 4, fill = NA, align = 'right'),
          ratio4Sets = if_else(setsPlayedSum4 > 0, setsWonSum4 / setsPlayedSum4 * 100, NA))
 
-# Compute how the ratio between the number of games won and played changed over time
-results <- cbind(results, gamesWon = rowSums(results[, paste0(rep('gamesWonSet', 5), 1:5)], na.rm = TRUE))
-results <- cbind(results, gamesLost = rowSums(results[, paste0(rep('gamesLostSet', 5), 1:5)], na.rm = TRUE))                                                     
+# Compute how the games winning percentage changed over time
+results <- cbind(results, gamesWon = rowSums(results[, paste0(rep('gamesWonSet', 5), 1:5)], na.rm = TRUE)) # Compute the number of games won in a match.
+results <- cbind(results, gamesLost = rowSums(results[, paste0(rep('gamesLostSet', 5), 1:5)], na.rm = TRUE)) # Compute the number of games lost in a match.                                              
 for(i in 1:nrow(results)) {
-  if(results$gamesWon[i] == 0 & results$gamesLost[i] == 0) {
+  if(results$gamesWon[i] == 0 & results$gamesLost[i] == 0) { # If both are equal to zero, the players did actually not play the match.
     results$gamesWon[i] <- NA
     results$gamesLost[i] <- NA
   }
@@ -635,11 +647,11 @@ gamesTime <- results %>%
   summarise(gamesPlayed = sum(gamesWon + gamesLost),
             gamesWon = sum(gamesWon))
 
-gamesTime <- left_join(tibble(monthYear), gamesTime, by = 'monthYear')
+gamesTime <- left_join(tibble(monthYear), gamesTime, by = 'monthYear') # Fill in the months in which the player did not play any match.
 gamesTime$gamesPlayed[is.na(gamesTime$gamesPlayed)] <- 0
 gamesTime$gamesWon[is.na(gamesTime$gamesWon)] <- 0
 
-gamesTime <- gamesTime %>%
+gamesTime <- gamesTime %>% # Compute a rolling games winning percentage (rolling window = 4 months).
   mutate(gamesPlayedSum4 = rollsum(gamesPlayed, k = 4, fill = NA, align = 'right'),
          gamesWonSum4 = rollsum(gamesWon, k = 4, fill = NA, align = 'right'),
          ratio4Games = if_else(gamesPlayedSum4 > 0, gamesWonSum4 / gamesPlayedSum4 * 100, NA))
@@ -647,13 +659,13 @@ gamesTime <- gamesTime %>%
 remove(i, monthYear)
 
 # Create a plot showing these ratios
-time <- reduce(list(matchesTime, setsTime, gamesTime), full_join, by = 'monthYear')
+time <- reduce(list(matchesTime, setsTime, gamesTime), full_join, by = 'monthYear') # Combine the data frames.
 
-time <- time %>%
+time <- time %>% # Prepare the data frame for ggplot.
   select(monthYear, starts_with('ratio4')) %>%
   gather(key = 'scoreLevel', value = 'winningPercentage', starts_with('ratio4'))
 
-for(level in c('Matches', 'Sets', 'Games')) {
+for(level in c('Matches', 'Sets', 'Games')) { # Change the labels of the plot.
   time$scoreLevel[time$scoreLevel == paste0('ratio4', level)] <- level
 }
 
@@ -677,17 +689,17 @@ plotRatio4 <- ggplot(time, aes(x = monthYear, y = winningPercentage, colour = sc
 remove(gamesTime, matchesTime, setsTime, time, level)
 
 # Compute the winning percentage of best-of-three and best-of-five matches
-results$bestOfFive <- NA
+results$bestOfFive <- NA # Create a column indicating whether the match was best-of-five.
 
 for(i in 1:nrow(results)) {
-  if(results$opponent[i] != 'Bye' & !is.na(results$walkover[i]) & results$walkover[i] == 0 & results$retirement[i] == 0) {
+  if(results$opponent[i] != 'Bye' & !is.na(results$walkover[i]) & results$walkover[i] == 0 & results$default[i] == 0 & results$retirement[i] == 0) {
     temp <- max(results$setsWon[i], results$setsLost[i])
     
-    results$bestOfFive[i] <- ifelse(temp == 3, 1, 0)
+    results$bestOfFive[i] <- ifelse(temp == 3, 1, 0) # If the winner of a match won three sets, it was best-of-five.
   }
 }
 
-for(i in c(1, 2)) {
+for(i in c(1, 2)) { # Compute the winning percentages.
   name <- c('BestOfThree', 'BestOfFive')[i]
   
   temp <- results %>%
@@ -701,14 +713,14 @@ for(i in c(1, 2)) {
 
 remove(temp, i, name)
 
-# Compute the match winning percentages at the grand slams
+# Compute the match winning percentages at the Grand Slams
 winningPercentageGrandSlams <- results %>%
   filter(opponent != 'Bye' & walkover == 0 &
            tournamentType == 'Grand Slam') %>%
   group_by(tournament) %>%
   summarise(winningPercentage = sum(win) / n())
 
-if(!all(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon') %in% winningPercentageGrandSlams$tournament)) {
+if(!all(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon') %in% winningPercentageGrandSlams$tournament)) { # Check whether the player has played at all grand slams. If not, add the missing grand slams with NAs.
   missingGrandSlams <- setdiff(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon'),
                                winningPercentageGrandSlams$tournament)
   
@@ -720,36 +732,32 @@ if(!all(c('Australian Open', 'Roland Garros', 'US Open', 'Wimbledon') %in% winni
 
 winningPercentageGrandSlams$winningPercentage <- beautifulPercentages(winningPercentageGrandSlams$winningPercentage)
 
-# Compute the total price money
+# Compute the total price money of the player
 priceMoneyUSDollarTotal <- results %>%
   select(tournament, tournamentStart, tournamentEnd, priceMoneyUSDollar) %>%
-  distinct() %>%
+  distinct() %>% # We need to make sure that we add the price money of every tournament only once.
   summarise(priceMoneyUSDollarTotal = sum(priceMoneyUSDollar, na.rm = TRUE))
 
-priceMoneyUSDollarTotal <- paste0(format(priceMoneyUSDollarTotal$priceMoneyUSDollarTotal, big.mark = '\''), '$')
+priceMoneyUSDollarTotal <- paste0(format(priceMoneyUSDollarTotal$priceMoneyUSDollarTotal, big.mark = '\''), '$') # Make the number look good for the report.
 
-# Compute the total price money per year and produce a beautiful bar plot
+# Compute the total price money of the player per year and produce a beautiful plot
 priceMoneyUSDollarTotalYearly <- results %>%
   select(tournament, tournamentStart, tournamentEnd, priceMoneyUSDollar, monthYear) %>%
-  mutate(year = year(monthYear)) %>%
-  distinct() %>%
+  mutate(year = year(monthYear)) %>% # Extract the year.
+  distinct() %>% # We need to make sure that we add the price money of every tournament only once.
   group_by(year) %>%
   summarise(priceMoneyUSDollarTotalYearly = sum(priceMoneyUSDollar, na.rm = TRUE)) %>%
-  arrange(year) %>%
-  mutate(cumSum = cumsum(priceMoneyUSDollarTotalYearly),
-         stack = cumsum(priceMoneyUSDollarTotalYearly) - priceMoneyUSDollarTotalYearly)
-
-temp <- priceMoneyUSDollarTotalYearly %>%
-  select(-cumSum) %>%
-  gather('key', 'value', -year)
-temp$key <- factor(temp$key, levels = c('priceMoneyUSDollarTotalYearly', 'stack'))
+  arrange(year) %>% # Order the rows according to the year.
+  mutate(stack = cumsum(priceMoneyUSDollarTotalYearly) - priceMoneyUSDollarTotalYearly) # Compute the total price money of the player at the beginning of every year.
 
 plotPriceMoneyUSDollarTotalYearly <- ggplot() +
   geom_bar(aes(x = year, y = value / 1000, alpha = key),
-           temp,
+           priceMoneyUSDollarTotalYearly %>%
+             gather('key', 'value', -year) %>%
+             mutate(key = factor(key, levels = c('priceMoneyUSDollarTotalYearly', 'stack'))), # The yearly price money should be stacked on the price money of the player at the beginning of every year (and not the other way round).
            stat = 'identity',
            fill = 'yellow') +
-  scale_alpha_discrete(range = c(1, 0)) +
+  scale_alpha_discrete(range = c(1, 0)) + # We only want to see the yearly price money.
   geom_text(aes(x = year, y = (stack + priceMoneyUSDollarTotalYearly / 2) / 1000, label = comma(priceMoneyUSDollarTotalYearly / 1000, big.mark = '\'')),
             priceMoneyUSDollarTotalYearly,
             size = 2.5,
@@ -765,25 +773,24 @@ plotPriceMoneyUSDollarTotalYearly <- ggplot() +
         legend.position = 'none',
         plot.background = element_rect(colour = 'black'),
         plot.margin = margin(0.5, 0.5, 0.5, 0.5, "cm"),
-        plot.title = element_text(size = 14, hjust = 0.5))
+        plot.title = element_text(size = 14, hjust = 0.5)) # We can safely ignore the warning message (we purposefully use alpha for a discrete variable).
+           
+remove(priceMoneyUSDollarTotalYearly)
 
-remove(priceMoneyUSDollarTotalYearly, temp)
-
-# If the player played more than 100 matches (otherwise the results do not make any sense), 
-# let us estimate the effect of some variables on the winning probability, using a linear probability model
-if(numberOfMatches > 100) {
+# Estimate the effect of some variables on the winning probability, using a linear probability model
+if(numberOfMatches > 100) { # We compute the linear probability model only if the player played more than 100 matches (otherwise the results do not make any sense).
   # First, let us create some additional variables
-  results$tournamentCountryHome <- ifelse(as.character(results$tournamentCountry) == as.character(overview$country), 1, 0)
-  results$priceMoneyTotalUSDollarM <- results$priceMoneyTotalUSDollar / 1000000
-  results$opponentAge <- results$monthYear - as.yearmon(results$opponentBirthday)
+  results$tournamentCountryHome <- ifelse(as.character(results$tournamentCountry) == as.character(overview$country), 1, 0) # Tournament at home.
+  results$priceMoneyTotalUSDollarM <- results$priceMoneyTotalUSDollar / 1000000 # Total price money in millions.
+  results$opponentAge <- results$monthYear - as.yearmon(results$opponentBirthday) # Age of the opponent.
   
-  # Second, let us specify the base groups 
+  # Second, let us specify the base group of surface
   i <- 1
   condition <- FALSE
   while(!condition) {
     baseGroup <- c('Hard', 'Clay', 'Grass', 'Carpet')[i]
     
-    if(baseGroup %in% results$surface) {
+    if(baseGroup %in% results$surface) { # Check whether the player has played any match on this surface. If so, use it as the base group. Otherwise, go on to the next one.
       results$surface <- relevel(results$surface, ref = baseGroup)
       
       condition <- TRUE
@@ -791,7 +798,7 @@ if(numberOfMatches > 100) {
       i <- i + 1
     }
     
-    if(i > 4) {
+    if(i > 4) { # There are only four possible surfaces.
       break
     }
   }
@@ -799,7 +806,7 @@ if(numberOfMatches > 100) {
   remove(baseGroup, condition, i)
   
   # Third, let us run the regression
-  temp <- results %>%
+  temp <- results %>% # Exclude byes and walkovers and choose the relevant variables.
     filter(opponent != 'Bye' & walkover == 0) %>%
     select(win, tournamentCountryHome, outdoor, surface, priceMoneyTotalUSDollarM,
            opponentRank, opponentAge, opponentHeight, opponentLefty, opponentOneHandedBackhand,
@@ -811,9 +818,9 @@ if(numberOfMatches > 100) {
       
       enoughSurfaces <- TRUE},
     silent = TRUE
-  )
+  ) # Rarely, this regression does not work because the player has played on only one surface.
   
-  if(!exists('lpm')) {
+  if(!exists('lpm')) { # If the regression did not work, remove surface from the variables and run the regression again.
     temp <- select(temp, -surface)
     
     lpm <- lm(win ~ ., temp)
@@ -823,7 +830,7 @@ if(numberOfMatches > 100) {
   
   remove(temp)
   
-  # Finally, let us create a beautiful table with the results
+  # Finally, let us create a table with the results
   rSquared <- round(summary(lpm)$r.squared, digits = 2)
   
   lpm <- tidy(lpm)
@@ -843,14 +850,14 @@ if(numberOfMatches > 100) {
 
 # Compute how many matches the player won with fewer games than the opponent
 unfairWins <- results %>%
-  filter(win == 1 & walkover == 0 & retirement == 0 & gamesWon < gamesLost) %>%
+  filter(win == 1 & walkover == 0 & default == 0 & retirement == 0 & gamesWon < gamesLost) %>%
   select(Date = monthYear, Tournament = tournament, 'Tournament Country' = tournamentCountry, Surface = surface, Round = round, 
          Opponent = opponent, 'Opponent Country' = opponentCountry, starts_with('gamesWonSet'), starts_with('gamesLostSet'), 'Games Won' = gamesWon, 'Games Lost' = gamesLost) %>%
   mutate(Result = paste0(gamesWonSet1, ':', gamesLostSet1, ', ', 
                          gamesWonSet2, ':', gamesLostSet2, ', ',
                          gamesWonSet3, ':', gamesLostSet3, ', ',
                          gamesWonSet4, ':', gamesLostSet4, ', ',
-                         gamesWonSet5, ':', gamesLostSet5), .keep = 'unused', .before = 'Games Won')
+                         gamesWonSet5, ':', gamesLostSet5), .keep = 'unused', .before = 'Games Won') # Format the scores.
 
 unfairWins$Result <- str_replace_all(unfairWins$Result, fixed(', NA:NA'), '')
 
@@ -858,20 +865,19 @@ numberOfUnfairWins <- nrow(unfairWins)
 
 # Analyse the finals and tournament wins
 finals <- results %>%
-  select(tournamentEnd, round, win) %>%
   filter(round == 'Finals') %>%
-  arrange(tournamentEnd)
+  arrange(tournamentEnd) # Order the rows according to the ending date of the tournament because finals obviously take place at the end of the tournament.
 
-finals$cumSum <- cumsum(finals$win)
+finals$cumSum <- cumsum(finals$win) # Compute the cumulative number of tournament wins.
 
-numberOfFinals <- nrow(finals)
+numberOfFinals <- nrow(finals) # Compute the number of finals played.
 
-if(numberOfFinals > 0) {
-  winningPercentageFinals <- beautifulPercentages(mean(finals$win, na.rm = TRUE))
+if(numberOfFinals > 0) { # If the player has reached at least one final, do this.
+  winningPercentageFinals <- beautifulPercentages(mean(finals$win, na.rm = TRUE)) # Compute the match winning percentage in finals.
   
-  plotFinals <- ggplot(mapping = aes(x = tournamentEnd, y = cumSum)) +
+  plotFinals <- ggplot(mapping = aes(x = tournamentEnd, y = cumSum)) + # Create a plot showing the cumulative number of tournament wins over time.
     geom_line(data = finals, colour = 'blue') +
-    geom_point(data = filter(finals, win == 0), colour = 'black', shape = 4, size = 3) +
+    geom_point(data = filter(finals, win == 0), colour = 'black', shape = 4, size = 3) + # Additionally indicate finals lost by black crosses in the plot.
     ylim(0, numberOfFinals) +
     labs(x = NULL,
          y = 'Cumulative Number of Tournament Wins',
@@ -891,7 +897,7 @@ if(numberOfFinals > 0) {
 remove(finals)
 
 # 6. CREATE A REPORT ---------------------------------------------------------
-# Define the name of the report
+# Define the name of the report (using the name of the player and the current date)
 name <- paste0('report', gsub(' ', '', playerName, fixed = TRUE), gsub(' ', '', as.yearmon(Sys.Date()), fixed = TRUE))
 
 # Finally create the report

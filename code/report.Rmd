@@ -1,8 +1,8 @@
 ---
 output: pdf_document
 ---
-
-\pagenumbering{gobble}
+<!-- This is the title page. -->
+\pagenumbering{gobble} <!-- Remove the page number on the title page. -->
 
 \begin{centering}
  
@@ -28,6 +28,10 @@ output: pdf_document
 
 \vspace{1.5cm}
 
+\Large \today
+
+\vspace{0.5cm}
+
 \Large Skills: Programming
 
 \vspace{0.5cm}
@@ -43,16 +47,22 @@ output: pdf_document
 # Introduction
 
 ```{r, echo = FALSE, results = 'asis'}
+# Objects from report.R:
+# - highestRank
+# - numberOfMatches
+# - overview
+# - playerName
+
 cat('This report is about **', playerName, '**, who is a tennis player', sep = '')
 
-if(!is.na(overview$country)) {
+if(!is.na(overview$country)) { # In these if-statements, we check whether the respective information is missing.
   cat(' from ')
   
   if(overview$country == 'USA') {
     cat('the ')
   }
   
-  cat(countrycode(overview$country, origin = 'ioc', destination = 'country.name'))
+  cat(countrycode(overview$country, origin = 'ioc', destination = 'country.name')) # Change the IOC to the English country name.
 }
 
 cat('. ')
@@ -97,11 +107,11 @@ if(!is.na(overview$lefty) & !is.na(overview$oneHandedBackhand)) {
 
 cat('\nHe ')
 
-if(overview$active == 0) {
+if(overview$active == 0) { # If not active any more, use past simple.
   cat('played', numberOfMatches, 'matches in total.')
-} else if(overview$active == 1) {
+} else if(overview$active == 1) { # If still active, use present perfect.
   cat('has played', numberOfMatches, 'matches so far.')
-}
+} # Importantly, active is never missing in the list of players.
 
 if(!is.na(highestRank)) {
   cat(' The highest ranking achieved is ', highestRank, '.', sep = '')
@@ -114,7 +124,20 @@ if(!is.na(highestRank)) {
 Here are a few interesting match winning percentages:
 
 ```{r, echo = FALSE, results = 'asis'}
-options(knitr.kable.NA = 'Never played')
+# Objects from report.R:
+# - winningPercentage
+# - winningPercentageOutdoor
+# - winningPercentageIndoor
+# - winningPercentageHard
+# - winningPercentageClay
+# - winningPercentageGrass
+# - winningPercentageBestOfThree
+# - winningPercentageBestOfFive
+# - winningPercentageOneHandedBackhand
+# - winningPercentageTwoHandedBackhand
+# - winningPercentageTop10
+
+options(knitr.kable.NA = 'Never played') # Display missing values as 'Never played'.
 
 kable(data.frame(c('Total', 'Outdoor', 'Indoor', 'Hard court', 'Clay court',
                    'Grass court', 'Best of three', 'Best of five', 'Against players with a one-handed backhand', 'Against players with a two-handed backhand',
@@ -129,6 +152,9 @@ The following figure shows the number of first, second, third, fourth, and fifth
 &nbsp;
 
 ```{r, echo = FALSE, fig.height = 3.5}
+# Objects from report.R:
+# - plotWinningPercentageSets
+
 plotWinningPercentageSets
 ```
 
@@ -139,7 +165,10 @@ In the following figure, you can see the winning percentages (matches, sets, and
 &nbsp;
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.5}
-# If the player played only a few matches, geom_smooth() does not work and throws up many warnings. We do not want to see them in the report.
+# WARNING = FALSE: If the player played only a few matches, geom_smooth() does not work properly and throws up many warnings. We do not want to see them in the report.
+
+# Objects from report.R:
+# - plotRatio4
 
 plotRatio4
 ```
@@ -147,27 +176,39 @@ plotRatio4
 \vspace{1cm}
 
 # Tournaments
-The match winning percentages at Grand Slams are as follows:
+The match winning percentages at the Grand Slams are as follows:
 
 ```{r, echo = FALSE, results = 'asis'}
-kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Percentage'))
+# Objects from report.R:
+# - winningPercentageGrandSlams
+
+kable(winningPercentageGrandSlams, col.names = c('Tournament', 'Match Winning Percentage')) # Missing values are still displayed as 'Never played'.
 ```
 
 ```{r, echo = FALSE, results = 'asis'}
-if(numberOfFinals > 0) {
+# Objects from report.R:
+# - numberOfFinals
+# - overview
+# - playerName
+
+if(numberOfFinals > 0) { # Check whether the player has reached at least one final.
   cat('In the figure on the next page, you can see the cumulative number of tournament wins. Black crosses indicate finals that', playerName, 'lost.\n')
   
   cat('\n&nbsp;')
 } else {
-  if(overview$active == 1) {
-    cat(playerName, 'has not reached any final yet.')
-  } else {
+  if(overview$active == 0) { # If not active any more, use past simple.
     cat(playerName, 'did never reach a final.')
+  } else if(overview$active == 1) { # If still active, use present perfect.
+    cat(playerName, 'has not reached any final yet.')
   }
 }
 ```
 
 ```{r, echo = FALSE, fig.height = 3.5}
+# Objects from report.R:
+# - numberOfFinals
+# - plotFinals
+
 if(numberOfFinals > 0) {
   plotFinals
 }
@@ -176,7 +217,12 @@ if(numberOfFinals > 0) {
 \vspace{1cm}
 
 ```{r, echo = FALSE, results = 'asis'}
-if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
+# Objects from report.R:
+# - playerName
+# - priceMoneyUSDollarTotal
+# - results
+
+if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) { # Include this section only if the price money of the player is not missing too often.
   cat('# Price Money\n')
   
   cat(playerName, '\'s total price money is ', priceMoneyUSDollarTotal, '. The following figure shows how it developed over time.\n', sep = '')
@@ -186,16 +232,24 @@ if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
 ```
 
 ```{r, echo = FALSE, fig.height = 3.5}
+# Objects from report.R:
+# - plotPriceMoneyUSDollarTotalYearly
+# - results
+
 if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
   plotPriceMoneyUSDollarTotalYearly
 }
 ```
 
 ```{r, echo = FALSE, results = 'asis'}
+# Objects from report.R:
+# - overview
+# - results
+
 if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
   cat('&nbsp;\n')
   
-  if(overview$active == 1) {
+  if(overview$active == 1) { # If still active, say this.
     cat('It should be noted that', year(Sys.Date()), 'is not over yet.\n')
   }
 }
@@ -204,8 +258,13 @@ if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
 
 
 ```{r, echo = FALSE, results = 'asis'}
-if(numberOfMatches > 100) {
-  if(!is.nan(rSquared)) {
+# Objects from report.R:
+# - numberOfMatches
+# - playerName
+# - rSquared
+
+if(numberOfMatches > 100) { # We compute the linear probability model only if the player played more than 100 matches (otherwise the results do not make any sense).
+  if(!is.nan(rSquared)) { # Additional reasonableness check.
     cat('\n# What affects the winning probability of ', playerName, '?\n', sep = '')
     
     cat('\nWe have estimated the effect of some variables on the winning probability, using a linear probability model. The following table shows the results:\n')
@@ -214,6 +273,11 @@ if(numberOfMatches > 100) {
 ```
 
 ```{r, echo = FALSE, results = 'asis'}
+# Objects from report.R:
+# - lpm
+# - numberOfMatches
+# - rSquared
+
 if(numberOfMatches > 100) {
   if(!is.nan(rSquared)) {
     kable(lpm %>% mutate(p.value = pvalue(p.value)) %>% filter(!is.na(estimate)), col.names = c('Predictor', 'B', 'SE', 't', 'p'), digits = c(0, 2, 3, 3, 3))
@@ -222,9 +286,18 @@ if(numberOfMatches > 100) {
 ```
 
 ```{r, echo = FALSE, results = 'asis'}
+# Objects from report.R:
+# - enoughSurfaces
+# - lpm
+# - numberOfMatches
+# - overview
+# - playerName
+# - results
+# - rSquared
+
 if(numberOfMatches > 100) {
   if(!is.nan(rSquared)) {
-    if(enoughSurfaces) {
+    if(enoughSurfaces) { # Provide the base group of surface only if surface is included in the regression.
       cat('\nThe base group is', levels(results$surface)[1], 'for the surface.\n')
     }
     
@@ -232,11 +305,14 @@ if(numberOfMatches > 100) {
     
     cat('\n')
     
-    if(overview$active == 0) {
+    # In the lines 311-580, the if-statements check for every variable whether the estimated coefficient is statistically (p-value < 0.1) and economically (estimated coefficient > 0.005) significant.
+    # Based on this, we make some possibly interesting statements. The only exception is surface, which we do not check for significance but simply compare the estimated coefficients.
+    
+    if(overview$active == 0) { # If not active any more, use past simple.
       if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 |
-                round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) {
+                round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) { # Not significant.
         cat('* It did not influence the winning probability whether', playerName, 'played at home or not.\n')
-      } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])) {
+      } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])) { # Significant.
         cat('*', playerName, 'played ')
         
         if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
@@ -248,7 +324,7 @@ if(numberOfMatches > 100) {
         cat('at home.\n')
       }
 
-      if(isTRUE(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0)) { # Significant.
         cat('*', playerName, 'played better ')
         
         if(lpm$estimate[lpm$term == 'Outdoor'] > 0) {
@@ -258,7 +334,7 @@ if(numberOfMatches > 100) {
         }
       }
       
-      if(all(c('Surface: Clay', 'Surface: Grass') %in% lpm$term)) {
+      if(all(c('Surface: Clay', 'Surface: Grass') %in% lpm$term)) { # Check whether the player played on hard, clay, and grass.
         if(!is.na(lpm$estimate[lpm$term == 'Surface: Clay']) & !is.na(lpm$estimate[lpm$term == 'Surface: Grass'])) {
           cat('* It seems that the order of preference for the surface was: ')
           
@@ -284,7 +360,7 @@ if(numberOfMatches > 100) {
         }
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Total Price Money (m$)'] < 0.1 & round(lpm$estimate[lpm$term == 'Total Price Money (m$)'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Total Price Money (m$)'] < 0.1 & round(lpm$estimate[lpm$term == 'Total Price Money (m$)'], digits = 2) != 0)) { # Significant.
         cat('*', playerName, 'played ')
         
         if(lpm$estimate[lpm$term == 'Total Price Money (m$)'] > 0) {
@@ -296,9 +372,9 @@ if(numberOfMatches > 100) {
         cat('when there was more money to win.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Rank'] > 0.1 | round(lpm$estimate[lpm$term == 'Opponent: Rank'], digits = 2) == 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Rank'] > 0.1 | round(lpm$estimate[lpm$term == 'Opponent: Rank'], digits = 2) == 0)) { # Not significant.
         cat('* The rank of the opponent did not substantially affect the winning probability.\n')
-      } else if(!is.na(lpm$estimate[lpm$term == 'Opponent: Rank'])){
+      } else if(!is.na(lpm$estimate[lpm$term == 'Opponent: Rank'])){ # Significant.
         if(lpm$estimate[lpm$term == 'Opponent: Rank'] > 0) {
           cat('* The winning probability increased ')
         } else {
@@ -308,7 +384,7 @@ if(numberOfMatches > 100) {
         cat('with the rank of the opponent.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Age'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Age'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Age'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Age'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability ')
         
         if(lpm$estimate[lpm$term == 'Opponent: Age'] > 0) {
@@ -320,7 +396,7 @@ if(numberOfMatches > 100) {
         cat('with the age of the opponent.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Height'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Height'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Height'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Height'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability ')
         
         if(lpm$estimate[lpm$term == 'Opponent: Height'] > 0) {
@@ -332,7 +408,7 @@ if(numberOfMatches > 100) {
         cat('with the height of the opponent.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Lefty'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Lefty'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Lefty'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Lefty'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability was ')
         
         if(lpm$estimate[lpm$term == 'Opponent: Lefty'] > 0) {
@@ -344,7 +420,7 @@ if(numberOfMatches > 100) {
         cat('against lefties.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: One Handed Backhand'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: One Handed Backhand'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability was larger against players with a ')
         
         if(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'] > 0) {
@@ -356,7 +432,7 @@ if(numberOfMatches > 100) {
         cat('backhand.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Best of Five'] < 0.1 & round(lpm$estimate[lpm$term == 'Best of Five'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Best of Five'] < 0.1 & round(lpm$estimate[lpm$term == 'Best of Five'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability was larger in ')
         
         if(lpm$estimate[lpm$term == 'Best of Five'] > 0) {
@@ -367,10 +443,10 @@ if(numberOfMatches > 100) {
         
         cat('matches.\n')
       }
-    } else if(overview$active == 1) {
-      if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 | round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) {
+    } else if(overview$active == 1) { # If still active, use present perfect.
+      if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 | round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) { # Not significant.
         cat('* It does not influence the winning probability whether', playerName, 'plays at home or not.\n')
-      } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])){
+      } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])){ # Significant.
         cat('*', playerName, 'plays ')
         
         if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
@@ -382,7 +458,7 @@ if(numberOfMatches > 100) {
         cat('at home.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0)) { # Significant.
         cat('*', playerName, 'plays better ')
         
         if(lpm$estimate[lpm$term == 'Outdoor'] > 0) {
@@ -392,7 +468,7 @@ if(numberOfMatches > 100) {
         }
       }
       
-      if(all(c('Surface: Clay', 'Surface: Grass') %in% lpm$term)) {
+      if(all(c('Surface: Clay', 'Surface: Grass') %in% lpm$term)) { # Check whether the player has played on hard, clay, and grass.
         if(!is.na(lpm$estimate[lpm$term == 'Surface: Clay']) & !is.na(lpm$estimate[lpm$term == 'Surface: Grass'])) {
           cat('* It seems that the order of preference for the surface is: ')
           
@@ -418,7 +494,7 @@ if(numberOfMatches > 100) {
         }
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Total Price Money (m$)'] < 0.1 & round(lpm$estimate[lpm$term == 'Total Price Money (m$)'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Total Price Money (m$)'] < 0.1 & round(lpm$estimate[lpm$term == 'Total Price Money (m$)'], digits = 2) != 0)) { # Significant.
         cat('*', playerName, 'plays ')
         
         if(lpm$estimate[lpm$term == 'Total Price Money (m$)'] > 0) {
@@ -430,9 +506,9 @@ if(numberOfMatches > 100) {
         cat('when there is more money to win.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Rank'] > 0.1 | round(lpm$estimate[lpm$term == 'Opponent: Rank'], digits = 2) == 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Rank'] > 0.1 | round(lpm$estimate[lpm$term == 'Opponent: Rank'], digits = 2) == 0)) { # Not significant.
         cat('* The rank of the opponent does not substantially affect the winning probability.\n')
-      } else if(!is.na(lpm$estimate[lpm$term == 'Opponent: Rank'])) {
+      } else if(!is.na(lpm$estimate[lpm$term == 'Opponent: Rank'])) { # Significant.
         if(lpm$estimate[lpm$term == 'Opponent: Rank'] > 0) {
           cat('* The winning probability increases ')
         } else {
@@ -442,7 +518,7 @@ if(numberOfMatches > 100) {
         cat('with the rank of the opponent.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Age'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Age'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Age'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Age'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability ')
         
         if(lpm$estimate[lpm$term == 'Opponent: Age'] > 0) {
@@ -454,7 +530,7 @@ if(numberOfMatches > 100) {
         cat('with the age of the opponent.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Height'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Height'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Height'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Height'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability ')
         
         if(lpm$estimate[lpm$term == 'Opponent: Height'] > 0) {
@@ -466,7 +542,7 @@ if(numberOfMatches > 100) {
         cat('with the height of the opponent.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Lefty'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Lefty'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: Lefty'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: Lefty'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability is ')
         
         if(lpm$estimate[lpm$term == 'Opponent: Lefty'] > 0) {
@@ -478,7 +554,7 @@ if(numberOfMatches > 100) {
         cat('against lefties.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: One Handed Backhand'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Opponent: One Handed Backhand'] < 0.1 & round(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability is larger against players with a ')
         
         if(lpm$estimate[lpm$term == 'Opponent: One Handed Backhand'] > 0) {
@@ -490,7 +566,7 @@ if(numberOfMatches > 100) {
         cat('backhand.\n')
       }
       
-      if(isTRUE(lpm$p.value[lpm$term == 'Best of Five'] < 0.1 & round(lpm$estimate[lpm$term == 'Best of Five'], digits = 2) != 0)) {
+      if(isTRUE(lpm$p.value[lpm$term == 'Best of Five'] < 0.1 & round(lpm$estimate[lpm$term == 'Best of Five'], digits = 2) != 0)) { # Significant.
         cat('* The winning probability is larger in ')
         
         if(lpm$estimate[lpm$term == 'Best of Five'] > 0) {
@@ -506,7 +582,7 @@ if(numberOfMatches > 100) {
     cat('\nIt should be noted that the R-squared is', rSquared)
     
     if(rSquared < 0.1) {
-      cat(', which is very low.')
+      cat(', which is very low.') # If the R squared is very low, point it out.
     } else {
       cat('.')
     }
@@ -518,16 +594,22 @@ if(numberOfMatches > 100) {
 
 # Wins With Fewer Games Than the Opponent
 ```{r, echo = FALSE, results = 'asis'}
-if(overview$active == 0) {
-  if(numberOfUnfairWins > 0) {
+# Objects from report.R:
+# - numberOfUnfairWins
+# - overview
+# - playerName
+# - unfairWins
+
+if(overview$active == 0) { # If not active any more, use past simple.
+  if(numberOfUnfairWins > 0) { # Check whether the player won any match with fewer games than the opponent.
     cat(playerName, 'won', numberOfUnfairWins, 'matches with fewer games than the opponent. You can see them in the following table:\n')
     
     kable(unfairWins)
   } else {
     cat(playerName, 'did not win any match with fewer games than the opponent.')
   }
-} else if(overview$active == 1) {
-  if(numberOfUnfairWins > 0) {
+} else if(overview$active == 1) { # If still active, use present perfect.
+  if(numberOfUnfairWins > 0) { # Check whether the player has won any match with fewer games than the opponent.
     cat(playerName, 'has won', numberOfUnfairWins, 'matches with fewer games than the opponent so far. You can see them in the following table:\n')
     
     kable(unfairWins)
