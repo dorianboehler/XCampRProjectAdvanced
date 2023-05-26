@@ -171,7 +171,7 @@ for(i in 1:nrow(players)) {
                        link = players$link[i],
                        error = as.character(e))
     
-    errors <<- rbind(errors, temp) # SUPER ASSIGNMENT!
+    errors <<- rbind(errors, temp) # SUPERASSIGNMENT!
     
     # Display the error in red
     print_colour(paste('Error:', as.character(e)), 'red')
@@ -238,7 +238,7 @@ for(i in 1:nrow(tryAgain)) {
                        link = tryAgain$link[i],
                        error = as.character(e))
     
-    errors <<- rbind(errors, temp) # SUPER ASSIGNMENT!
+    errors <<- rbind(errors, temp) # SUPERASSIGNMENT!
   })
 } # Again, we can ignore the warning messages. They are in the errors.
 

@@ -18,7 +18,7 @@ library(tidyverse)
 library(zoo)
 
 # Set fixed variables
-australienDollarToUSDollar <- 0.6761 # 06.05.2023
+australianDollarToUSDollar <- 0.6761 # 06.05.2023
 euroToUSDollar <- 1.1210 # 06.05.2023
 poundToUSDollar <- 1.2639 # 06.05.2023
 
@@ -40,7 +40,7 @@ load('data/playersCleaned.RData')
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Copy and paste the link of the player of interest (see players)
-playerLink <- '/en/players/carlos-alcaraz/a0e2/' # !!!
+playerLink <- '/en/players/sami-reinwein/ra62/' # !!!
 
 # Extract the general information on the player
 overview <- filter(players, link == playerLink)
@@ -270,7 +270,7 @@ for(i in 1:nrow(results)) {
   value <- results$priceMoneyTotalValue[i]
   
   if(currency == 'A$' & !is.na(currency)) { # Australian Dollar.
-    results$priceMoneyTotalUSDollar[i] <- value * australienDollarToUSDollar
+    results$priceMoneyTotalUSDollar[i] <- value * australianDollarToUSDollar
   } else if(currency == '€' & !is.na(currency)) { # Euro.
     results$priceMoneyTotalUSDollar[i] <- value * euroToUSDollar
   } else if(currency == '£' & !is.na(currency)) { # Pound.
@@ -425,7 +425,7 @@ for(i in 1:nrow(results)) {
   value <- results$priceMoneyValue[i]
   
   if(currency == 'A$' & !is.na(currency)) { # Australian Dollar.
-    results$priceMoneyUSDollar[i] <- value * australienDollarToUSDollar
+    results$priceMoneyUSDollar[i] <- value * australianDollarToUSDollar
   } else if(currency == '€' & !is.na(currency)) { # Euro.
     results$priceMoneyUSDollar[i] <- value * euroToUSDollar
   } else if(currency == '£' & !is.na(currency)) { # Pound.
@@ -439,7 +439,7 @@ for(i in 1:nrow(results)) {
   }
 }
 
-remove(australienDollarToUSDollar, currency, euroToUSDollar, i, poundToUSDollar, value)
+remove(australianDollarToUSDollar, currency, euroToUSDollar, i, poundToUSDollar, value)
 
 # Add the general information on the opponents
 results <- left_join(results, players, by = c('opponentLink' = 'link'))
@@ -736,9 +736,10 @@ winningPercentageGrandSlams$winningPercentage <- beautifulPercentages(winningPer
 priceMoneyUSDollarTotal <- results %>%
   select(tournament, tournamentStart, tournamentEnd, priceMoneyUSDollar) %>%
   distinct() %>% # We need to make sure that we add the price money of every tournament only once.
-  summarise(priceMoneyUSDollarTotal = sum(priceMoneyUSDollar, na.rm = TRUE))
+  summarise(sum(priceMoneyUSDollar, na.rm = TRUE)) %>%
+  pull(1)
 
-priceMoneyUSDollarTotal <- paste0(format(priceMoneyUSDollarTotal$priceMoneyUSDollarTotal, big.mark = '\''), '$') # Make the number look good for the report.
+priceMoneyUSDollarTotal <- paste0(format(round(priceMoneyUSDollarTotal), big.mark = '\''), '$') # Make the number look good for the report.
 
 # Compute the total price money of the player per year and produce a beautiful plot
 priceMoneyUSDollarTotalYearly <- results %>%
