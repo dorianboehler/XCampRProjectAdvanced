@@ -37,7 +37,7 @@ for(testingPlayer in 1:sampleSize) {
     # Extract the player's link
     playerLink <- playersSample$link[testingPlayer]
     
-    # Try the code
+    # Try the code (without including the lines 442-443 because they remove the exchange rates)
     sourceCertainLines('code/report.R', c(45:441, 444:906))
     
     # Indicate the success

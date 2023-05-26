@@ -40,7 +40,7 @@ load('data/playersCleaned.RData')
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Copy and paste the link of the player of interest (see players)
-playerLink <- '/en/players/sami-reinwein/ra62/' # !!!
+playerLink <- '/en/players/carlos-alcaraz/a0e2/' # !!!
 
 # Extract the general information on the player
 overview <- filter(players, link == playerLink)
@@ -764,7 +764,8 @@ plotPriceMoneyUSDollarTotalYearly <- ggplot() +
             size = 2.5,
             check_overlap = TRUE) +
   scale_x_continuous(breaks = seq(min(priceMoneyUSDollarTotalYearly$year), max(priceMoneyUSDollarTotalYearly$year), 3)) +
-  scale_y_continuous(labels = comma_format(big.mark = '\'')) +
+  scale_y_continuous(labels = comma_format(big.mark = '\''),
+                     limits = c(0, ifelse(sum(priceMoneyUSDollarTotalYearly$priceMoneyUSDollarTotalYearly) > 0, NA, 1))) +
   labs(title = 'Total Price Money per Year',
        x = 'Year',
        y = 'Total Price Money (K$)') +
