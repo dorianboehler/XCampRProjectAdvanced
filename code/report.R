@@ -40,7 +40,7 @@ load('data/playersCleaned.RData')
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Copy and paste the link of the player of interest (see players)
-playerLink <- '/en/players/william-jack-lynch/l822/' # !!!
+playerLink <- '/en/players/roger-federer/f324/' # !!!
 
 # Extract the general information on the player
 overview <- filter(players, link == playerLink)
