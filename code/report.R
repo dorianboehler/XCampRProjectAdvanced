@@ -40,7 +40,7 @@ load('data/playersCleaned.RData')
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Copy and paste the link of the player of interest (see players)
-playerLink <- '/en/players/carlos-alcaraz/a0e2/' # !!!
+playerLink <- '/en/players/kristof-minarik/m0k0/' # !!!
 
 # Extract the general information on the player
 overview <- filter(players, link == playerLink)
@@ -780,40 +780,49 @@ plotPriceMoneyUSDollarTotalYearly <- ggplot() +
 remove(priceMoneyUSDollarTotalYearly)
 
 # Estimate the effect of some variables on the winning probability, using a linear probability model
-if(numberOfMatches > 100) { # We compute the linear probability model only if the player played more than 100 matches (otherwise the results do not make any sense).
-  # First, let us create some additional variables
+# First, let us create some additional variables
+if(!is.na(overview$country)) { # If the player's country is not missing, do this.
   results$tournamentCountryHome <- ifelse(as.character(results$tournamentCountry) == as.character(overview$country), 1, 0) # Tournament at home.
-  results$priceMoneyTotalUSDollarM <- results$priceMoneyTotalUSDollar / 1000000 # Total price money in millions.
-  results$opponentAge <- results$monthYear - as.yearmon(results$opponentBirthday) # Age of the opponent.
+}
+results$priceMoneyTotalUSDollarM <- results$priceMoneyTotalUSDollar / 1000000 # Total price money in millions.
+results$opponentAge <- results$monthYear - as.yearmon(results$opponentBirthday) # Age of the opponent.
+
+# Second, let us specify the base group of surface
+i <- 1
+condition <- FALSE
+while(!condition) {
+  baseGroup <- c('Hard', 'Clay', 'Grass', 'Carpet')[i]
   
-  # Second, let us specify the base group of surface
-  i <- 1
-  condition <- FALSE
-  while(!condition) {
-    baseGroup <- c('Hard', 'Clay', 'Grass', 'Carpet')[i]
+  if(baseGroup %in% results$surface) { # Check whether the player has played any match on this surface. If so, use it as the base group. Otherwise, go on to the next one.
+    results$surface <- relevel(results$surface, ref = baseGroup)
     
-    if(baseGroup %in% results$surface) { # Check whether the player has played any match on this surface. If so, use it as the base group. Otherwise, go on to the next one.
-      results$surface <- relevel(results$surface, ref = baseGroup)
-      
-      condition <- TRUE
-    } else {
-      i <- i + 1
-    }
-    
-    if(i > 4) { # There are only four possible surfaces.
-      break
-    }
+    condition <- TRUE
+  } else {
+    i <- i + 1
   }
   
-  remove(baseGroup, condition, i)
-  
-  # Third, let us run the regression
-  temp <- results %>% # Exclude byes and walkovers and choose the relevant variables.
-    filter(opponent != 'Bye' & walkover == 0) %>%
-    select(win, tournamentCountryHome, outdoor, surface, priceMoneyTotalUSDollarM,
-           opponentRank, opponentAge, opponentHeight, opponentLefty, opponentOneHandedBackhand,
-           bestOfFive)
-  
+  if(i > 4) { # There are only four possible surfaces.
+    break
+  }
+}
+
+remove(baseGroup, condition, i)
+
+# Third, let us exclude byes and walkovers and select the independent and dependent variables
+temp <- filter(results, opponent != 'Bye' & walkover == 0)
+
+if(!is.na(overview$country)) { # tournamentCountryHome exists only if the player's country is not missing.
+  temp <- select(temp, win, tournamentCountryHome, outdoor, surface, priceMoneyTotalUSDollarM,
+                 opponentRank, opponentAge, opponentHeight, opponentLefty, opponentOneHandedBackhand,
+                 bestOfFive)
+} else {
+  temp <- select(temp, win, outdoor, surface, priceMoneyTotalUSDollarM, opponentRank,
+                 opponentAge, opponentHeight, opponentLefty, opponentOneHandedBackhand, bestOfFive)
+}
+
+# Finally, let us run the regression
+runRegression <- nrow(na.omit(temp)) > 30 # We compute the linear probability model only if there are enough observations without missing values (otherwise the results do not make much sense).
+if(runRegression) {
   try(
     expr = {
       lpm <- lm(win ~ ., temp)
@@ -830,12 +839,9 @@ if(numberOfMatches > 100) { # We compute the linear probability model only if th
     enoughSurfaces <- FALSE
   }
   
-  remove(temp)
+  rSquared <- round(summary(lpm)$r.squared, digits = 2) # Save the R squared.
   
-  # Finally, let us create a table with the results
-  rSquared <- round(summary(lpm)$r.squared, digits = 2)
-  
-  lpm <- tidy(lpm)
+  lpm <- tidy(lpm) # Create a table with the results.
   
   lpm$term[lpm$term == '(Intercept)'] <- 'Intercept'
   lpm$term[lpm$term == 'tournamentCountryHome'] <- 'Tournament at Home'
@@ -849,6 +855,8 @@ if(numberOfMatches > 100) { # We compute the linear probability model only if th
   lpm$term[lpm$term == 'opponentOneHandedBackhand'] <- 'Opponent: One Handed Backhand'
   lpm$term[lpm$term == 'bestOfFive'] <- 'Best of Five'
 }
+
+remove(temp)
 
 # Compute how many matches the player won with fewer games than the opponent
 unfairWins <- results %>%

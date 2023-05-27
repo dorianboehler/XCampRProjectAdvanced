@@ -204,7 +204,9 @@ if(numberOfFinals > 0) { # Check whether the player has reached at least one fin
 }
 ```
 
-```{r, echo = FALSE, fig.height = 3.5}
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 3.5}
+# WARNING = FALSE: There is a warning if the player played only one final. We do not want to see this warning in the report.
+
 # Objects from report.R:
 # - numberOfFinals
 # - plotFinals
@@ -222,7 +224,7 @@ if(numberOfFinals > 0) {
 # - priceMoneyUSDollarTotal
 # - results
 
-if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) { # Include this section only if the price money of the player is not missing too often.
+if(mean(!is.na(results$priceMoneyUSDollar)) > 1/2) { # Include this section only if the price money of the player is not missing too often.
   cat('# Price Money\n')
   
   cat(playerName, '\'s total price money is ', priceMoneyUSDollarTotal, '. The following figure shows how it developed over time.\n', sep = '')
@@ -236,7 +238,7 @@ if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) { # Include this section only
 # - plotPriceMoneyUSDollarTotalYearly
 # - results
 
-if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
+if(mean(!is.na(results$priceMoneyUSDollar)) > 1/2) {
   plotPriceMoneyUSDollarTotalYearly
 }
 ```
@@ -246,7 +248,7 @@ if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
 # - overview
 # - results
 
-if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
+if(mean(!is.na(results$priceMoneyUSDollar)) > 1/2) {
   cat('&nbsp;\n')
   
   if(overview$active == 1) { # If still active, say this.
@@ -259,11 +261,11 @@ if(mean(!is.na(results$priceMoneyUSDollar)) > 1/3) {
 
 ```{r, echo = FALSE, results = 'asis'}
 # Objects from report.R:
-# - numberOfMatches
 # - playerName
 # - rSquared
+# - runRegression
 
-if(numberOfMatches > 100) { # We compute the linear probability model only if the player played more than 100 matches (otherwise the results do not make any sense).
+if(runRegression) { # We compute the linear probability model only if there are enough observations without missing values (otherwise the results do not make much sense).
   if(!is.nan(rSquared)) { # Additional reasonableness check.
     cat('\n# What affects the winning probability of ', playerName, '?\n', sep = '')
     
@@ -275,10 +277,10 @@ if(numberOfMatches > 100) { # We compute the linear probability model only if th
 ```{r, echo = FALSE, results = 'asis'}
 # Objects from report.R:
 # - lpm
-# - numberOfMatches
 # - rSquared
+# - runRegression
 
-if(numberOfMatches > 100) {
+if(runRegression) {
   if(!is.nan(rSquared)) {
     kable(lpm %>% mutate(p.value = pvalue(p.value)) %>% filter(!is.na(estimate)), col.names = c('Predictor', 'B', 'SE', 't', 'p'), digits = c(0, 2, 3, 3, 3))
   }
@@ -289,13 +291,13 @@ if(numberOfMatches > 100) {
 # Objects from report.R:
 # - enoughSurfaces
 # - lpm
-# - numberOfMatches
 # - overview
 # - playerName
 # - results
 # - rSquared
+# - runRegression
 
-if(numberOfMatches > 100) {
+if(runRegression) {
   if(!is.nan(rSquared)) {
     if(enoughSurfaces) { # Provide the base group of surface only if surface is included in the regression.
       cat('\nThe base group is', levels(results$surface)[1], 'for the surface.\n')
@@ -305,23 +307,25 @@ if(numberOfMatches > 100) {
     
     cat('\n')
     
-    # In the lines 311-580, the if-statements check for every variable whether the estimated coefficient is statistically (p-value < 0.1) and economically (estimated coefficient > 0.005) significant.
+    # In the lines 311-585, the if-statements check for every variable whether the estimated coefficient is statistically (p-value < 0.1) and economically (estimated coefficient > 0.005) significant.
     # Based on this, we make some possibly interesting statements. The only exception is surface, which we do not check for significance but simply compare the estimated coefficients.
     
     if(overview$active == 0) { # If not active any more, use past simple.
-      if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 |
-                round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) { # Not significant.
-        cat('* It did not influence the winning probability whether', playerName, 'played at home or not.\n')
-      } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])) { # Significant.
-        cat('*', playerName, 'played ')
-        
-        if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
-          cat('better ')
-        } else {
-          cat('worse ')
+      if('Tournament at Home' %in% lpm$term) { # If 'Tournament at Home' is included in the regression, do this.
+        if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 |
+                  round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) { # Not significant.
+          cat('* It did not influence the winning probability whether', playerName, 'played at home or not.\n')
+        } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])) { # Significant.
+          cat('*', playerName, 'played ')
+          
+          if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
+            cat('better ')
+          } else {
+            cat('worse ')
+          }
+          
+          cat('at home.\n')
         }
-        
-        cat('at home.\n')
       }
 
       if(isTRUE(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0)) { # Significant.
@@ -444,18 +448,21 @@ if(numberOfMatches > 100) {
         cat('matches.\n')
       }
     } else if(overview$active == 1) { # If still active, use present perfect.
-      if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 | round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) { # Not significant.
-        cat('* It does not influence the winning probability whether', playerName, 'plays at home or not.\n')
-      } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])){ # Significant.
-        cat('*', playerName, 'plays ')
-        
-        if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
-          cat('better ')
-        } else {
-          cat('worse ')
+      if('Tournament at Home' %in% lpm$term) { # If 'Tournament at Home' is included in the regression, do this.
+        if(isTRUE(lpm$p.value[lpm$term == 'Tournament at Home'] > 0.1 |
+                  round(lpm$estimate[lpm$term == 'Tournament at Home'], digits = 2) == 0)) { # Not significant.
+          cat('* It does not influence the winning probability whether', playerName, 'plays at home or not.\n')
+        } else if(!is.na(lpm$estimate[lpm$term == 'Tournament at Home'])){ # Significant.
+          cat('*', playerName, 'plays ')
+          
+          if(lpm$estimate[lpm$term == 'Tournament at Home'] > 0) {
+            cat('better ')
+          } else {
+            cat('worse ')
+          }
+          
+          cat('at home.\n')
         }
-        
-        cat('at home.\n')
       }
       
       if(isTRUE(lpm$p.value[lpm$term == 'Outdoor'] < 0.1 & round(lpm$estimate[lpm$term == 'Outdoor'], digits = 2) != 0)) { # Significant.
