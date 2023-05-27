@@ -5,10 +5,10 @@ This project set out to create a programme that automatically compiles a report 
 
 The following steps were necessary to achieve this goal:
 
-1. Scrape all year-end rankings and some general information on every player from the ATP since 1973 in order to get the list of players.
+1. Scrape all year-end rankings and some general information on every player from [atptour.com](https://www.atptour.com/en/) in order to get the list of players.
 2. Clean this list.
 3. Write a programme that, regardless of the player that the user may choose,
-  * scrapes all results of a player (including information on the tournament, the opponent, and so on),
+  * scrapes all results of a player from [atptour.com](https://www.atptour.com/en/) (including information on the tournament, the opponent, and so on),
   * cleans the results,
   * analyses the results, and
   * produces a report on the player.
@@ -65,7 +65,7 @@ If the user wants to update the list of players, they can simply run [players.R]
 ## Testing
 Using [testing.R](code/testing.R), we tested [report.R](code/report.R) with several samples of players (size: 500).
 
-Although we do not get any error any more (except for the "error" that a player actually never played a match), we cannot guarantee that the programme works for all 15,134 players because of inconsistencies in the raw data.
+Although we do not get any error any more (except for the "error" that a player has actually never played a match), we cannot guarantee that the programme works for all 15,134 players because the raw data is very inconsistent.
 
 ## Sources
 The data is scraped from [atptour.com](https://www.atptour.com/en/).
