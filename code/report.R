@@ -40,7 +40,7 @@ load('data/playersCleaned.RData')
 
 # 2. CHOOSE A PLAYER FROM THE LIST -------------------------------------------
 # Copy and paste the link of the player of interest (see players)
-playerLink <- '/en/players/kristof-minarik/m0k0/' # !!!
+playerLink <- '/en/players/william-jack-lynch/l822/' # !!!
 
 # Extract the general information on the player
 overview <- filter(players, link == playerLink)
@@ -54,6 +54,7 @@ if(nrow(overview) != 1) {
 
 # Extract the player's name
 playerName <- overview$name
+playerName <- gsub('\\', '', playerName, fixed = TRUE) # Two player names contain backslashes, which may cause problems.
 
 # 3. SCRAPE THE RESULTS OF THE PLAYER ----------------------------------------
 # Download the website
