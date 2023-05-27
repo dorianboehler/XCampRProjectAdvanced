@@ -65,7 +65,7 @@ If the user wants to update the list of players, they can simply run [players.R]
 ## Testing
 Using [testing.R](code/testing.R), we tested [report.R](code/report.R) with several samples of players (size: 500).
 
-Although we do not get any error any more (except for the "error" that a player has actually never played a match), we cannot guarantee that the programme works for all 15,134 players because the raw data is very inconsistent.
+Although we do not get any error any more (except for the "error" that a player has actually never played a match), we cannot guarantee that the programme works perfectly for all 15,134 players because the raw data is very inconsistent.
 
 ## Sources
 The data is scraped from [atptour.com](https://www.atptour.com/en/).
